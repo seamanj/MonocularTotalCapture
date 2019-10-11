@@ -1,0 +1,170 @@
+1. 
+
+compiling issue : 
+
+CMake Error: The following variables are used in this project, but they are set to NOTFOUND.
+Please set them or make sure they are set and tested correctly in the CMake files:
+opencv_dep_CUDA_nppi_LIBRARY
+
+reason : opencv-2.4.13.6 is incompatible with CUDA-10.1.
+
+
+solution: download and compile the opencv2.4.13.6 from my private github repo.
+
+after installing, please change the file /usr/local/share/OpenCV/OpenCVConfig.cmake as the blog said.
+https://blog.csdn.net/seamanj/article/details/78334745
+
+
+2. 
+compiling issue : when compiling ceres-sovler
+
+/home/seamanj/Software/ceres-solver/internal/ceres/gtest/gtest.h:10445:35: error: variable or field ‘it’ declared void
+   for (typename C::const_iterator it = container.begin();
+
+reason : use eigen 3.3.9
+
+solution: use eigen 3.3.7 instead
+
+
+3.
+compiling issue : /usr/bin/ld: cannot find -lopencv_dep_cudart
+
+solution : CUDA_USE_STATIC_CUDA_RUNTIME=OFF 
+
+set(CUDA_USE_STATIC_CUDA_RUNTIME OFF) in cmake file
+
+
+4.
+compiling issue:
+
+[100%] Linking CXX executable run_fitting
+libMYLIB.a(Renderer.cpp.o): In function `Renderer::InitGraphics()':
+Renderer.cpp:(.text+0xdc): undefined reference to `glewInit'
+Renderer.cpp:(.text+0x417): undefined reference to `__glewUseProgram'
+
+
+solution:  
+
+change ${GLEW_LIBRARY} to ${GLEW_LIBRARIES}.
+ 
+message("glew")
+message("${GLEW_LIBRARIES}")
+
+5. 
+running issue:
+run_pipeline.sh: line 29: ffmpeg: command not found
+
+
+solution: 
+
+https://askubuntu.com/questions/699502/ffmpeg-command-not-found
+
+I successfully figured it out by my self, here is how.
+
+remove the current ffmpeg by running:
+
+sudo apt-get remove --purge ffmpeg
+Add ppa trusty-media for 14.04:
+
+sudo apt-add-repository ppa:mc3man/trusty-media
+For 16.04, add the following Repo:
+
+sudo apt-add-repository ppa:jonathonf/ffmpeg-3
+Update repo:
+
+sudo apt-get update
+Finally install it:
+
+sudo apt-get install ffmpeg
+
+
+6.
+running issue:
+
+import tensorflow as tf
+ModuleNotFoundError: No module named 'tensorflow'
+
+solution:
+
+pip install tensorflow-gpu==1.13.1
+
+
+
+
+7.
+running issue:
+
+Traceback (most recent call last):
+  File "save_total_sequence.py", line 9, in <module>
+    import cv2
+ImportError: /opt/ros/kinetic/lib/python2.7/dist-packages/cv2.so: undefined symbol: PyCObject_Type
+
+
+solution : 
+https://stackoverflow.com/questions/43019951/after-install-ros-kinetic-cannot-import-opencv
+
+comment #source /opt/ros/kinetic/setup.bash in ~/.bashrc
+
+
+8. running issue:
+
+Traceback (most recent call last):
+  File "save_total_sequence.py", line 9, in <module>
+    import cv2
+ModuleNotFoundError: No module named 'cv2'
+
+
+solution: pip install opencv-python
+
+
+9.
+
+issue:
+
+2019-10-08 13:00:58.917393: W tensorflow/stream_executor/platform/default/dso_loader.cc:55] Could not load dynamic library 'libcudart.so.10.0'; dlerror: libcudart.so.10.0: cannot open shared object file: No such file or directory
+2019-10-08 13:00:58.917500: W tensorflow/stream_executor/platform/default/dso_loader.cc:55] Could not load dynamic library 'libcublas.so.10.0'; dlerror: libcublas.so.10.0: cannot open shared object file: No such file or directory
+2019-10-08 13:00:58.917614: W tensorflow/stream_executor/platform/default/dso_loader.cc:55] Could not load dynamic library 'libcufft.so.10.0'; dlerror: libcufft.so.10.0: cannot open shared object file: No such file or directory
+2019-10-08 13:00:58.917724: W tensorflow/stream_executor/platform/default/dso_loader.cc:55] Could not load dynamic library 'libcurand.so.10.0'; dlerror: libcurand.so.10.0: cannot open shared object file: No such file or directory
+2019-10-08 13:00:58.917877: W tensorflow/stream_executor/platform/default/dso_loader.cc:55] Could not load dynamic library 'libcusolver.so.10.0'; dlerror: libcusolver.so.10.0: cannot open shared object file: No such file or directory
+2019-10-08 13:00:58.918015: W tensorflow/stream_executor/platform/default/dso_loader.cc:55] Could not load dynamic library 'libcusparse.so.10.0'; dlerror: libcusparse.so.10.0: cannot open shared object file: No such file or directory
+
+
+solution: 
+
+https://github.com/tensorflow/tensorflow/issues/26289
+If you want to use TensorFlow with CUDA 10.1, you currently need to build it from source. The binaries we ship are built for CUDA 10.0.
+
+better use CUDA 9.0
+
+10. 
+
+issue:
+
+bash run_pipeline.sh example_dance
+ls: cannot access '/home/seamanj/Software/MonocularTotalCapture/data/example_dance/openpose_result/*': No such file or directory
+Openpose output collected: data dimension:
+(0, 0, 0, 0, 0, 0)
+POF results exist. Skip POF generation.
+Root Directory: /home/seamanj/Software/MonocularTotalCapture/data
+Sequence Name: example_dance
+Error: Starting frame must be less than end frame.
+
+
+reason : 
+This is because openpose_result folder is alread existed.
+
+
+solution:
+delete the empty openpose_result folder
+
+11. 
+
+issue:
+
+Sequence Name: example_dance
+Error: File /home/seamanj/Software/MonocularTotalCapture/data/example_dance/net_output/000000000001.txt does not exists
+
+solution:
+
+delete the empty folder.
+
