@@ -1,0 +1,10 @@
+1. run the first example
+
+bash run_pipeline.sh example_dance
+
+2. run the second example only capturing the upper body
+
+bash run_pipeline.sh example_speech -f
+
+
+bash run_pipeline_Cihan.sh example_speech -f
