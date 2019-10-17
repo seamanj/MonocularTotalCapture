@@ -55,8 +55,16 @@ image_root = os.path.join(args.path, 'raw_image')
 pkl_file = os.path.join(args.path, '{}.pkl'.format(args.seqName))
 with open(pkl_file, 'rb') as f:
     pkl_data = pickle.load(f)
+# tj : pickle data : bs, ls, rs, fs, img_dirs, calib_data, frame_indices
+#    bs.append(joint2d[map_body25_to_body19])
+#    fs.append(face2d)
+#    ls.append(left_hand2d)
+#    rs.append(right_hand2d)
+#    img_dirs.append(img_file)
+#    frame_indices.append(i)
+
 num_samples = len(pkl_data[0])  # number of frames collected in pkl
-K = np.array(pkl_data[5]['K'], dtype=np.float32)
+K = np.array(pkl_data[5]['K'], dtype=np.float32) # tj : calib_data
 s = [1, 368, 368, 3]
 assert s[1] == s[2]
 data = {
@@ -68,12 +76,17 @@ data = {
                                                shape=[s[0], s[1], s[2], 3])
 }
 
+#with tf.Session() as sess:
+#    print(sess.run(data['bimage_crop']))
+# tj : print out the value of a tensor
 bcrop_center2d_origin = np.zeros((num_samples, 2), dtype=np.float32)
 bscale2d_origin = np.zeros((num_samples,), dtype=np.float32)
 # precompute the body bounding box for smoothing
 for i in range(num_samples):
     openpose_body = pkl_data[0][i, list(range(18)) + [1, 1], :2].astype(np.float32)  # duplicate neck for headtop and chest
+    # tj : <class 'tuple'>: (20, 2)
     openpose_body_score = pkl_data[0][i, list(range(18)) + [0, 0], 2].astype(np.float32)
+    # tj : <class 'tuple'>: (20,)
     openpose_body_valid = (openpose_body_score > 0.01)
     if not openpose_body_valid.any():
         # no bounding box
@@ -81,23 +94,33 @@ for i in range(num_samples):
             bcrop_center2d_origin[i] = bcrop_center2d_origin[i - 1]
             bscale2d_origin[i] = bscale2d_origin[i - 1]
     min_coord = np.amin(openpose_body[openpose_body_valid], axis=0)
+    # tj : left upper corner
     max_coord = np.amax(openpose_body[openpose_body_valid], axis=0)
+    # tj : right lower corner
     bcrop_center2d_origin[i] = 0.5 * (min_coord + max_coord)
+    # tj : center point
     fit_size = np.amax(np.maximum(max_coord - bcrop_center2d_origin[i], bcrop_center2d_origin[i] - min_coord))
+    # tj : the maximum half edge from center point (vertical or horizontal)
     # if (not openpose_body_valid[9]) and (not openpose_body_valid[10]) and (not openpose_body_valid[12]) and (not openpose_body_valid[13]):
+    # tj : Joints here are actually 10,11,13,14 (RKnee, RAnkle, LKnee, LAnkle) as joint 8 is skipped in (collect_openpose.py, line 8)
     if args.freeze or ((not openpose_body_valid[9]) and (not openpose_body_valid[10]) and (not openpose_body_valid[12]) and (not openpose_body_valid[13])):
         # upper body only (detected by openpose)
         # crop_size_best = 2 * fit_size * 3  # youtube_talkshow1
         crop_size_best = 2 * fit_size * 4
     else:
         crop_size_best = 2 * fit_size * body_zoom
+    # tj : calculate the best crop size
     bscale2d_origin[i] = float(s[1]) / crop_size_best
 bcrop_center2d_smooth = np.stack((savitzky_golay(bcrop_center2d_origin[:, 0], 21, 3), savitzky_golay(bcrop_center2d_origin[:, 1], 21, 3)), axis=1)
+# tj : <class 'tuple'>: (246, 2), smoothed center
 bscale2d_smooth = savitzky_golay(bscale2d_origin, 21, 3)
+# tj : <class 'tuple'>: (246,), smoothed scale
+
 ####
 print('set bscale2d constant')
 # bscale2d_smooth[1:] = bscale2d_smooth[0]
 bscale2d_smooth[:-1] = bscale2d_smooth[-1]
+# tj : assign the last element to other elements before
 if args.visualize:
     plt.plot(bcrop_center2d_origin[:, 0])
     plt.plot(bcrop_center2d_smooth[:, 0])
@@ -115,7 +138,9 @@ rhand_ref_frame = -1
 lhand_ref_frame = -1
 for i in range(num_samples):
     openpose_rhand = pkl_data[2][i, utils.keypoint_conversion.a4_to_main['openpose_rhand'], :2].astype(np.float32)  # duplicate neck for headtop
+    #tj : <class 'tuple'>: (21, 2)
     openpose_rhand_score = pkl_data[2][i, utils.keypoint_conversion.a4_to_main['openpose_rhand_score'], 2].astype(np.float32)
+    #tj : <class 'tuple'>: (21,)
     openpose_rhand_valid = (openpose_rhand_score > 0.01)
     if openpose_rhand_valid.any():
         min_coord = np.amin(openpose_rhand[openpose_rhand_valid], axis=0)
@@ -124,6 +149,7 @@ for i in range(num_samples):
         if rfit_size > max_rsize:
             max_rsize = rfit_size
             rhand_ref_frame = i
+        # tj : calculate the maximum right hand size
     openpose_lhand = pkl_data[1][i, utils.keypoint_conversion.a4_to_main['openpose_lhand'], :2].astype(np.float32)  # duplicate neck for headtop
     openpose_lhand_score = pkl_data[1][i, utils.keypoint_conversion.a4_to_main['openpose_lhand_score'], 2].astype(np.float32)
     openpose_lhand_valid = (openpose_lhand_score > 0.01)
@@ -134,6 +160,7 @@ for i in range(num_samples):
         if lfit_size > max_lsize:
             max_lsize = lfit_size
             lhand_ref_frame = i
+        # tj : calculate the maximum left hand size
 assert max_rsize > 0
 assert max_lsize > 0
 rscale2d_ref = float(s[1]) / (2 * max_rsize * hand_zoom)
@@ -153,6 +180,7 @@ with tf.variable_scope('hand', reuse=tf.AUTO_REUSE):
 s = data['bimage_crop'].get_shape().as_list()
 data['bheatmap_2d'] = tf.image.resize_images(bheatmap_2d[-1], (s[1], s[2]), tf.image.ResizeMethod.BICUBIC)
 data['bPAF'] = tf.image.resize_images(bPAF[-1], (s[1], s[2]), tf.image.ResizeMethod.BICUBIC)
+# - tj : data['bPAF'] - (1, 368, 368, 69)
 s = data['limage_crop'].get_shape().as_list()
 data['lheatmap_2d'] = tf.image.resize_images(lheatmap_2d[-1], (s[1], s[2]), tf.image.ResizeMethod.BICUBIC)
 data['lPAF'] = tf.image.resize_images(lPAF[-1], (s[1], s[2]), tf.image.ResizeMethod.BICUBIC)
@@ -165,6 +193,8 @@ data['rPAF'] = data['rPAF'] * tf.constant([-1, 1, 1] * (60 // 3), dtype=tf.float
 gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.35)
 sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
 sess.run(tf.global_variables_initializer())
+# tj : visualize in Tensorboard
+summary_writer = tf.summary.FileWriter('./log/', sess.graph)
 tf.train.start_queue_runners(sess=sess)
 
 cpt = './snapshots/Final_qual_domeCOCO_chest_noPAF2D/model-390000'
@@ -179,11 +209,15 @@ eval_list += ['K', 'openpose_face', 'body_valid', 'left_hand_valid', 'right_hand
 eval_list += ['openpose_foot', 'openpose_foot_score']
 
 BODY_PAF_SELECT_INDEX = np.concatenate([np.arange(9), np.arange(10, 13), np.arange(14, 23)], axis=0)
+# - tj : [ 0  1  2  3  4  5  6  7  8 10 11 12 14 15 16 17 18 19 20 21 22]
 lcrop_center2d_origin = np.zeros((num_samples, 2), dtype=np.float32)
+# - tj : <class 'tuple'>: (246, 2)
 lscale2d_origin = np.zeros((num_samples), dtype=np.float32)
+# - tj : <class 'tuple'>: (246,)
 rcrop_center2d_origin = np.zeros((num_samples, 2), dtype=np.float32)
+# - tj : <class 'tuple'>: (246, 2)
 rscale2d_origin = np.zeros((num_samples), dtype=np.float32)
-
+# - tj : <class 'tuple'>: (246,)
 frame_indices = pkl_data[6]
 for i, frame_index in enumerate(frame_indices):
     if frame_index < start_from:
@@ -197,9 +231,12 @@ for i, frame_index in enumerate(frame_indices):
     # read the data here
     filename = os.path.join(image_root, pkl_data[4][i])
     image_v = cv2.imread(filename)[:, :, ::-1]  # convert to RGB order
+    # - tj : <class 'tuple'>: (1080, 1920, 3)
     val_dict = {}
     openpose_body = pkl_data[0][i, list(range(18)) + [1, 1], :2].astype(np.float32)  # duplicate neck for headtop and chest
+    # - tj : <class 'tuple'>: (20, 2)
     openpose_body_score = pkl_data[0][i, list(range(18)) + [0, 0], 2].astype(np.float32)
+    # - tj : 20
     openpose_body_valid = (openpose_body_score > 0)
     val_dict['openpose_body'] = openpose_body
     val_dict['openpose_body_score'] = openpose_body_score
@@ -219,9 +256,12 @@ for i, frame_index in enumerate(frame_indices):
     # compute the Homography
     bH = np.array([[bscale2d, 0, s[2] / 2 - bscale2d * bcrop_center2d[0]], [0, bscale2d, s[1] / 2 - bscale2d * bcrop_center2d[1]]], dtype=np.float32)
     bimage_crop_v = cv2.warpAffine(image_v, bH, (s[2], s[1]), flags=cv2.INTER_LANCZOS4)
+    # - tj : <class 'tuple'>: (368, 368, 3)
     bimage_crop_v_feed = np.expand_dims((bimage_crop_v / 255 - 0.5), axis=0)
-
+    # - tj : <class 'tuple'>: (1, 368, 368, 3)
     bheatmap_2d, bPAF = [np.squeeze(_) for _ in sess.run([data['bheatmap_2d'], data['bPAF']], feed_dict={data['bimage_crop']: bimage_crop_v_feed})]
+    # - tj : [data['bheatmap_2d'], data['bPAF']] are unknown variables, their definitions are defined before. They are related to
+    # the placeholder.
     val_dict['bheatmap_2d'] = bheatmap_2d
     val_dict['bPAF'] = bPAF
 
@@ -235,6 +275,7 @@ for i, frame_index in enumerate(frame_indices):
     # 2D body detection
     if frame_index == start_from or args.seqName == 'qualitative':
         body2d_pred_v, bscore = utils.PAF.detect_keypoints2d_PAF(val_dict['bheatmap_2d'], val_dict['bPAF'])
+        # - tj : body2d_pred_v - <class 'tuple'>: (20, 2), bscore - 20
     else:
         body2d_pred_v, bscore = utils.PAF.detect_keypoints2d_PAF(val_dict['bheatmap_2d'], val_dict['bPAF'], prev_frame=prev_frame)
     prev_frame = body2d_pred_v
@@ -257,10 +298,14 @@ for i, frame_index in enumerate(frame_indices):
     crop hands and feed into network
     """
     openpose_rhand = pkl_data[2][i, utils.keypoint_conversion.a4_to_main['openpose_rhand'], :2].astype(np.float32)  # duplicate neck for headtop
+    # - tj : <class 'tuple'>: (21, 2)
     openpose_rhand_score = pkl_data[2][i, utils.keypoint_conversion.a4_to_main['openpose_rhand_score'], 2].astype(np.float32)
+    # - tj : <class 'tuple'>: (21,)
     openpose_rhand_valid = (openpose_rhand_score > 0.01)
     openpose_lhand = pkl_data[1][i, utils.keypoint_conversion.a4_to_main['openpose_lhand'], :2].astype(np.float32)  # duplicate neck for headtop
+    # - tj : <class 'tuple'>: (21, 2)
     openpose_lhand_score = pkl_data[1][i, utils.keypoint_conversion.a4_to_main['openpose_lhand_score'], 2].astype(np.float32)
+    # - tj : <class 'tuple'>: (21,)
     openpose_lhand_valid = (openpose_lhand_score > 0.01)
     val_dict['openpose_rhand'] = openpose_rhand
     val_dict['openpose_rhand_score'] = openpose_rhand_score
@@ -369,13 +414,16 @@ for i, frame_index in enumerate(frame_indices):
                 rcrop_center2d = rcrop_center2d_last
 
     rcrop_center2d_origin[i] = rcrop_center2d
+    # - tj : <class 'tuple'>: (246, 2)
     val_dict['rcrop_center2d'] = rcrop_center2d
     rscale2d_origin[i] = rscale2d
+    # - tj : <class 'tuple'>: (246,)
     val_dict['rscale2d'] = rscale2d
     rH = np.array([[rscale2d, 0, s[2] / 2 - rscale2d * rcrop_center2d[0]], [0, rscale2d, s[1] / 2 - rscale2d * rcrop_center2d[1]]], dtype=np.float32)
     rimage_crop_v = cv2.warpAffine(image_v, rH, (s[2], s[1]), flags=cv2.INTER_LANCZOS4)
+    # - tj : <class 'tuple'>: (368, 368, 3)
     rimage_crop_v_feed = np.expand_dims((rimage_crop_v / 255 - 0.5), axis=0)
-
+    # - tj : <class 'tuple'>: (1, 368, 368, 3)
     lcrop_center2d_origin[i] = lcrop_center2d
     val_dict['lcrop_center2d'] = lcrop_center2d
     lscale2d_origin[i] = lscale2d
@@ -388,12 +436,24 @@ for i, frame_index in enumerate(frame_indices):
         [np.squeeze(_) for _ in
          sess.run([data['lheatmap_2d'], data['lPAF'], data['rheatmap_2d'], data['rPAF']],
                   feed_dict={data['limage_crop']: limage_crop_v_feed, data['rimage_crop']: rimage_crop_v_feed})]
+    # - tj : before squeeze :
+    #        data['lheatmap_2d'] - <class 'tuple'>: (1, 368, 368, 22)
+    #        data['lPAF'] - <class 'tuple'>: (1, 368, 368, 60)
+    #        data['rheatmap_2d'] - <class 'tuple'>: (1, 368, 368, 22)
+    #        data['rPAF'] - <class 'tuple'>: (1, 368, 368, 60)
+    #        after squeeze
+    #        data['lheatmap_2d'] - <class 'tuple'>: (368, 368, 22)
+    #        data['lPAF'] - <class 'tuple'>: (368, 368, 60)
+    #        data['rheatmap_2d'] - <class 'tuple'>: (368, 368, 22)
+    #        data['rPAF'] - <class 'tuple'>: (368, 368, 60)
+
     val_dict['rheatmap_2d'] = rheatmap_2d
     val_dict['rPAF'] = rPAF
     val_dict['lheatmap_2d'] = lheatmap_2d
     val_dict['lPAF'] = lPAF
 
     lhand2d_pred_v, lscore = utils.PAF.detect_keypoints2d_PAF(val_dict['lheatmap_2d'], val_dict['lPAF'], objtype=1)
+    # - tj : lhand2d_pred_v - <class 'tuple'>: (21, 2), lscore - <class 'tuple'>: (21,)
     rhand2d_pred_v, rscore = utils.PAF.detect_keypoints2d_PAF(val_dict['rheatmap_2d'], val_dict['rPAF'], objtype=1)
     lhand2d_pred_v = lhand2d_pred_v[:21, :]
     rhand2d_pred_v = rhand2d_pred_v[:21, :]
@@ -426,6 +486,7 @@ for i, frame_index in enumerate(frame_indices):
     rhand_2d = {'uv_local': rhand2d_pred_v, 'scale2d': val_dict['rscale2d'], 'crop_center2d': val_dict['rcrop_center2d'], 'valid': rhand_valid}
 
     total_keypoints_2d = utils.keypoint_conversion.assemble_total_2d(body_2d, lhand_2d, rhand_2d)  # put back to original image size, and change the keypoint order
+    # - tj : <class 'tuple'>: (63, 2)
     openpose_face = val_dict['openpose_face']
     openpose_face[:, 0] *= (val_dict['openpose_face_score'] > 0.5)  # Face must have a high threshold in case of occlusion.
     openpose_face[:, 1] *= (val_dict['openpose_face_score'] > 0.5)
@@ -433,7 +494,7 @@ for i, frame_index in enumerate(frame_indices):
     openpose_foot[:, 0] *= (val_dict['openpose_foot_score'] > 0.05)
     openpose_foot[:, 1] *= (val_dict['openpose_foot_score'] > 0.05)
     total_keypoints_2d = np.concatenate([total_keypoints_2d, openpose_face, openpose_foot], axis=0)  # has dimension 20 + 21 + 21 + 70 + 6
-
+    # - tj : <class 'tuple'>: (139, 2)
     # extract PAF vectors from network prediction
     body3d_pred_v, _ = utils.PAF.PAF_to_3D(body2d_pred_v, val_dict['bPAF'], objtype=0)  # vec3ds has 18 rows, excluding shoulder to ear connection, only 14 used for fitting
     vec3ds = utils.PAF.collect_PAF_vec(body2d_pred_v, val_dict['bPAF'], objtype=0)  # vec3ds has 18 rows, excluding shoulder to ear connection, only 14 used for fitting

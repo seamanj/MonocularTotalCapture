@@ -168,3 +168,12 @@ solution:
 
 delete the empty folder.
 
+
+conclusion:
+
+CUDA9.0
+tensorflow0-gpu 1.15.0rc2
+OpenCV2.4.13.6
+
+
+

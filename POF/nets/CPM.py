@@ -85,6 +85,7 @@ class CPM(object):
             # conv1_1 ~ conv4_4
             x = input_image
             for block_id, (layer_num, chan_num, pool) in enumerate(zip(layers_per_block, out_chan_list, pool_list), 1):
+            # tj : block_id from 1 to start
                 for layer_id in range(layer_num):
                     x = ops.conv_relu(x, 'conv%d_%d' % (block_id, layer_id + 1), kernel_size=3, stride=1, out_chan=chan_num, leaky=False, trainable=train)
                 if pool:

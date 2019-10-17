@@ -198,6 +198,7 @@ def plot_all_PAF(PAF_array, PAFdim):
 
 
 def PAF_to_3D(coord2d, PAF, objtype=0):
+    # - tj : 3d coordinates have already been stored in PAF
     if objtype == 0:
         depth_root_idx = 1  # put neck at 0-depth
     else:
@@ -222,8 +223,9 @@ def PAF_to_3D(coord2d, PAF, objtype=0):
         u = np.linspace(0.0, 1.0, num=11)
         v = 1.0 - u
         points = (np.outer(A, v) + np.outer(B, u)).astype(int)  # 2 * N
+        # - tj : <class 'tuple'>: (2, 11)
         vec3ds = PAF[points[1], points[0], 3 * ic:3 * ic + 3]  # note order of y, x in index
-
+        # - tj : <class 'tuple'>: (11, 3)
         vec3d = np.mean(vec3ds, axis=0)
         vec3d[np.isnan(vec3d)] = 0.0  # numerical stability
 

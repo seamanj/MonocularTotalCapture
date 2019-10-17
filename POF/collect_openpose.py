@@ -6,7 +6,7 @@ import pickle
 import argparse
 
 map_body25_to_body19 = list(range(8)) + list(range(9, 25))  # total of 24
-
+# tj : no joint 8
 parser = argparse.ArgumentParser()
 parser.add_argument('--seqName', '-n', type=str)
 parser.add_argument('--rootDir', '-r', type=str)
@@ -56,9 +56,13 @@ for i in frameRange:
 
 img_dirs = np.array(img_dirs)
 bs = np.array(bs)
+# tj : <class 'tuple'>: (246, 24, 3) - body
 ls = np.array(ls)
+# tj : <class 'tuple'>: (246, 21, 3) - left hand
 rs = np.array(rs)
+# tj : <class 'tuple'>: (246, 21, 3) - right hand
 fs = np.array(fs)
+# tj : <class 'tuple'>: (246, 70, 3) - face
 frame_indices = np.array(frame_indices)
 
 print('Openpose output collected: data dimension:')
@@ -66,3 +70,12 @@ print((len(ls), len(rs), len(fs), len(bs), len(img_dirs), len(frame_indices)))
 
 with open('{}/{}.pkl'.format(root, seqName), 'wb') as f:
     pickle.dump((bs, ls, rs, fs, img_dirs, calib_data, frame_indices), f)
+
+
+# tj : pickle data : bs, ls, rs, fs, img_dirs, calib_data, frame_indices
+#    bs.append(joint2d[map_body25_to_body19])
+#    fs.append(face2d)
+#    ls.append(left_hand2d)
+#    rs.append(right_hand2d)
+#    img_dirs.append(img_file)
+#    frame_indices.append(i)
