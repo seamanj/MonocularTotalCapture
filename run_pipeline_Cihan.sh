@@ -6,7 +6,7 @@ set -e
 # $2: whether the video is upper body only (false by default, enable by -f)
 
 #dataDir=/vol/research/extol/personal/cihan/data/MonocularTotalCapture/
-dataDir=/home/seamanj/Software/MonocularTotalCapture/data
+dataDir=/home/seamanj/Workspace/MonocularTotalCapture/data
 seqName=example_speech
 upperBody=-f
 
@@ -18,7 +18,7 @@ upperBody=-f
 # Git clone openpose to ../openpose and compile with cmake
 openposeDir=/home/seamanj/Software/openpose
 # Where the monocular total capture is installed
-MTCDir=/home/seamanj/Software/MonocularTotalCapture
+MTCDir=/home/seamanj/Workspace/MonocularTotalCapture
 
 # convert to absolute path
 MTCDir=$(readlink -f $MTCDir)
@@ -80,12 +80,22 @@ else
 fi
 
 #tj : count the number of frame
-stage1_numPng=$(ls $dataDir/$seqName/body_3d_frontal/*.png | wc -l) 
-stage1_numTxt=$(ls $dataDir/$seqName/body_3d_frontal/*.txt | wc -l)
-stage1_numFrame=$((stage1_numPng<stage1_numTxt?stage1_numPng:stage1_numTxt)) 
-stage2_numPng=$(ls $dataDir/$seqName/body_3d_frontal_tracking/*.png | wc -l) 
-stage2_numTxt=$(ls $dataDir/$seqName/body_3d_frontal_tracking/*.txt | wc -l)
-stage2_numFrame=$((stage2_numPng<stage2_numTxt?stage2_numPng:stage2_numTxt)) 
+
+if [ -d $dataDir/$seqName/body_3d_frontal/ ]; then
+	stage1_numPng=$(ls $dataDir/$seqName/body_3d_frontal/*.png | wc -l) 
+	stage1_numTxt=$(ls $dataDir/$seqName/body_3d_frontal/*.txt | wc -l)
+	stage1_numFrame=$((stage1_numPng<stage1_numTxt?stage1_numPng:stage1_numTxt))
+else
+	stage1_numFrame=1
+fi 
+if [ -d $dataDir/$seqName/body_3d_frontal_tracking/ ]; then
+	stage2_numPng=$(ls $dataDir/$seqName/body_3d_frontal_tracking/*.png | wc -l) 
+	stage2_numTxt=$(ls $dataDir/$seqName/body_3d_frontal_tracking/*.txt | wc -l)
+	stage2_numFrame=$((stage2_numPng<stage2_numTxt?stage2_numPng:stage2_numTxt))
+else
+	stage2_numframe=1
+fi
+
 
 echo "numFrame: $numFrame"
 echo "stage1_numFrame: $stage1_numFrame"
