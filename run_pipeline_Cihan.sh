@@ -37,6 +37,10 @@ if [ ! -d raw_image ]; then
 	ffmpeg -i $seqName.mp4 raw_image/${seqName}_%08d.png
 fi
 
+num_raw_image=$(ls $dataDir/$seqName/raw_image/$seqName_* | wc -l)
+echo "num_raw_image: $num_raw_image"
+
+
 # Check if Openpose has already been extracted and compressed
 cd $dataDir/$seqName
 if [ -f openpose_result.tar.gz ]; then
@@ -58,14 +62,31 @@ if [ ! -d openpose_result ]; then
 	--number_people_max 1 \
 	--write_video $dataDir/$seqName/$seqName"_openpose.mp4" \
 	--write_video_fps 25
+else  # openpose didn't run on all raw images
+	num_openpose_result=$(ls $dataDir/$seqName/openpose_result/$seqName_* | wc -l)
+	echo "num_openpose_result: $num_openpose_result"
+	if [ $num_openpose_result -lt $num_raw_image ]; then
+		cd $openposeDir
+		./build/examples/openpose/openpose.bin \
+		--face \
+		--hand_scale_number 8 --hand_scale_range 0.4 --hand \
+		--image_dir $dataDir/$seqName/raw_image \
+		--write_json $dataDir/$seqName/openpose_result \
+		--render_pose 1 \
+		--display 0 \
+		--model_pose BODY_25 \
+		--number_people_max 1 \
+		--write_video $dataDir/$seqName/$seqName"_openpose.mp4" \
+		--write_video_fps 25
+	fi
 fi
 
 # merge openpose results into a single file
 # tj : wc -l  - word counting the number of lines
 # https://en.wikipedia.org/wiki/Wc_(Unix)
 cd $MTCDir
-numFrame=$(ls $dataDir/$seqName/openpose_result/$seqName_* | wc -l)
-python3 POF/collect_openpose.py -n $seqName -r $dataDir/$seqName -c $numFrame
+#numFrame=$(ls $dataDir/$seqName/openpose_result/$seqName_* | wc -l)
+python3 POF/collect_openpose.py -n $seqName -r $dataDir/$seqName -c $num_raw_image
 
 # run POF generation code
 cd $dataDir/$seqName
@@ -76,7 +97,13 @@ cd $MTCDir/POF
 if [ ! -d $dataDir/$seqName/net_output/ ]; then
 	python3 save_total_sequence.py -s $seqName -p $dataDir/$seqName $upperBody
 else
-	echo "POF results exist. Skip POF generation."
+	num_POF=$(ls $dataDir/$seqName/net_output/*.txt | wc -l)
+	echo "num_POF: $num_POF"
+	if [ $num_POF -lt $num_raw_image ]; then
+		python3 save_total_sequence.py -s $seqName -p $dataDir/$seqName $upperBody
+	else
+		echo "POF results exist. Skip POF generation."
+	fi
 fi
 
 #tj : count the number of frame
@@ -85,19 +112,25 @@ if [ -d $dataDir/$seqName/body_3d_frontal/ ]; then
 	stage1_numPng=$(ls $dataDir/$seqName/body_3d_frontal/*.png | wc -l) 
 	stage1_numTxt=$(ls $dataDir/$seqName/body_3d_frontal/*.txt | wc -l)
 	stage1_numFrame=$((stage1_numPng<stage1_numTxt?stage1_numPng:stage1_numTxt))
+	if [ $stage1_numFrame -eq 0 ]; then 
+		stage1_numFrame=1
+	fi
 else
 	stage1_numFrame=1
 fi 
+
 if [ -d $dataDir/$seqName/body_3d_frontal_tracking/ ]; then
 	stage2_numPng=$(ls $dataDir/$seqName/body_3d_frontal_tracking/*.png | wc -l) 
 	stage2_numTxt=$(ls $dataDir/$seqName/body_3d_frontal_tracking/*.txt | wc -l)
 	stage2_numFrame=$((stage2_numPng<stage2_numTxt?stage2_numPng:stage2_numTxt))
+	if [ $stage2_numFrame -eq 0 ]; then 
+		stage2_numFrame=1
+	fi
 else
-	stage2_numframe=1
+	stage2_numFrame=1
 fi
 
 
-echo "numFrame: $numFrame"
 echo "stage1_numFrame: $stage1_numFrame"
 echo "stage2_numFrame: $stage2_numFrame"
 
@@ -108,11 +141,11 @@ cd $MTCDir/FitAdam/
 if [ ! -f ./build/run_fitting ]; then
 	echo "C++ project not correctly compiled. Please check your setting."
 else
-	if [ $stage1_numFrame -lt $numFrame ]; then
-		./build/run_fitting --root_dirs $dataDir --seqName $seqName --start $stage1_numFrame --end $((numFrame + 1)) --stage 1 --imageOF
+	if [ $stage1_numFrame -lt $num_raw_image ]; then
+		./build/run_fitting --root_dirs $dataDir --seqName $seqName --start $stage1_numFrame --end $((num_raw_image + 1)) --stage 1 --imageOF
 	fi
-	if [ $stage2_numFrame -lt $numFrame ]; then
-		./build/run_fitting --root_dirs $dataDir --seqName $seqName --start $stage2_numFrame --end $((numFrame + 1)) --stage 2 --imageOF
+	if [ $stage2_numFrame -lt $num_raw_image ]; then
+		./build/run_fitting --root_dirs $dataDir --seqName $seqName --start $stage2_numFrame --end $((num_raw_image + 1)) --stage 2 --imageOF
 	fi
 fi
 #./build/run_fitting --root_dirs $dataDir --seqName $seqName --start 1 --end $((numFrame + 1)) --stage 1 --imageOF
