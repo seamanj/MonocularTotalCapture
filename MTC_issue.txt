@@ -169,6 +169,16 @@ solution:
 delete the empty folder.
 
 
+
+12. issue : 
+
+/usr/local/include/igl/per_vertex_normals.h:77:36: fatal error: per_vertex_normals.cpp: No such file or directory
+
+solution:
+
+do not install igllib, just specify the include path in CMakeLists.txt
+
+
 conclusion:
 
 CUDA9.0
