@@ -1,16 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="bb6060c9-208b-4d90-8e7a-ffea4f77395b" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/../MTC_issue.txt" beforeDir="false" afterPath="$PROJECT_DIR$/../MTC_issue.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/POF.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/POF.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/collect_openpose.py" beforeDir="false" afterPath="$PROJECT_DIR$/collect_openpose.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nets/CPM.py" beforeDir="false" afterPath="$PROJECT_DIR$/nets/CPM.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/save_total_sequence.py" beforeDir="false" afterPath="$PROJECT_DIR$/save_total_sequence.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/utils/PAF.py" beforeDir="false" afterPath="$PROJECT_DIR$/utils/PAF.py" afterDir="false" />
-    </list>
+    <list default="true" id="bb6060c9-208b-4d90-8e7a-ffea4f77395b" name="Default Changelist" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23,7 +14,7 @@
   <component name="ProjectId" id="1SCKQiPQGboLUZ56fCcPt0F1Ykm" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="PropertiesComponent">
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../Phoenix2014T_resize" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RunDashboard">

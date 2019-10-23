@@ -328,7 +328,7 @@ int main(int argc, char* argv[])
     /*
     Stage 3: Run tracking
     */
-    if (FLAGS_stage <= 3)
+    if (FLAGS_stage == 2)
     {
         boost::filesystem::create_directories(FLAGS_root_dirs + "/" + FLAGS_seqName + "/body_3d_frontal_tracking/");
 
