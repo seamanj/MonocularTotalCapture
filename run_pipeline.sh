@@ -10,7 +10,7 @@ upperBody=$2
 # Assume that you already have a video in $dataDir/(seqName)/(seqName).mp4 
 dataDir=./data/
 # Git clone openpose to ../openpose and compile with cmake
-openposeDir=../openpose/
+openposeDir=/opt/openpose/
 
 # convert to absolute path
 MTCDir=$(readlink -f .)

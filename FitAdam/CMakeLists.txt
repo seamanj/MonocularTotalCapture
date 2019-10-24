@@ -13,7 +13,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wpedantic -Wall -Wextra")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 
-set(IGL_INCLUDE_DIRS "/opt/libigl/include")
+set(IGL_INCLUDE_DIRS "/home/seamanj/Software/libigl/include")
 include_directories(${IGL_INCLUDE_DIRS})
 find_package(OpenCV 2.4 REQUIRED)
 find_package( PkgConfig )
