@@ -6,7 +6,8 @@ set -e
 # $2: whether the video is upper body only (false by default, enable by -f)
 
 #dataDir=/vol/research/extol/personal/cihan/data/MonocularTotalCapture/
-dataDir=/home/seamanj/Workspace/MonocularTotalCapture/data
+#dataDir=/home/seamanj/Workspace/MonocularTotalCapture/data
+dataDir=./data
 seqName=example_speech
 upperBody=-f
 
@@ -16,9 +17,9 @@ upperBody=-f
 # Assume that you already have a video in $dataDir/(seqName)/(seqName).mp4 
 #dataDir=/vol/research/extol/personal/cihan/data/MonocularTotalCapture/
 # Git clone openpose to ../openpose and compile with cmake
-openposeDir=/home/seamanj/Software/openpose
+openposeDir=/opt/openpose
 # Where the monocular total capture is installed
-MTCDir=/home/seamanj/Workspace/MonocularTotalCapture
+MTCDir=/opt/MTC
 
 # convert to absolute path
 MTCDir=$(readlink -f $MTCDir)
