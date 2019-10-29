@@ -57,6 +57,8 @@ Renderer::Renderer(int* argc, char** argv)
     glutInitDisplayMode ( GLUT_RGBA  | GLUT_DOUBLE | GLUT_DEPTH | GLUT_MULTISAMPLE);
     glEnable(GL_MULTISAMPLE);
     window_id = glutCreateWindow("Adam Model Renderer");
+    // tj - : work in windowless mode
+    glutHideWindow();
     this->InitGraphics();
     this->simpleInit();
 }
@@ -291,6 +293,7 @@ void Renderer::simpleInit()
 
     glutReshapeFunc(this->reshape);
     glutSpecialFunc(this->SpecialKeys);
+    // -- tj : guess useless in windowless mode
 }
 
 void Renderer::reshape(int w, int h)
@@ -343,7 +346,9 @@ void Renderer::reshape(int w, int h)
 void Renderer::RenderHand(VisualizedData& g_visData)
 {
     pData = &g_visData;
-    glutDisplayFunc(MeshRender);
+    //glutDisplayFunc(MeshRender);
+    // - tj : as we trigger manually in renderandread() and work around the glut refresh scheme
+    // this line is useless.
     
 }
 
@@ -982,14 +987,18 @@ void Renderer::DrawSkeleton(double* joint, uint vis_type, std::vector<int> connM
 
 void Renderer::RenderAndRead()
 {
-    // if (use_color_fbo) glBindFramebuffer(GL_FRAMEBUFFER, g_fbo_color);
-    glutMainLoopEvent();
+    if (use_color_fbo) glBindFramebuffer(GL_FRAMEBUFFER, g_fbo_color);
+    //glutMainLoopEvent(); 
+    // - tj : useless in windowless mode, instead we refresh manually by calling MeshRender() directly.
+    MeshRender(); // tj : trigger manually    
+
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     // glReadPixels(0, 0, options.width, options.height, GL_RGB, GL_UNSIGNED_BYTE, pData->read_buffer);
     glReadPixels(0, 0, options.width, options.height, GL_RGBA, GL_UNSIGNED_BYTE, pData->read_buffer);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glutPostRedisplay();
+    //glutPostRedisplay();
+    // - tj : useless in windowless model
     g_drawMode = MODE_DRAW_DEFUALT;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glUseProgram(0);
@@ -999,7 +1008,9 @@ void Renderer::CameraMode(uint position, int width, int height, double* calibK)
 {
     options.width = width; options.height = height;
     if(calibK != NULL) options.K = calibK;
-    glutReshapeWindow(width, height);
+    //glutReshapeWindow(width, height);
+    // - tj : useless in windowless model, we trigger manually by calling reshape()
+    reshape(width, height);// tj : trigger directly
     options.CameraMode = 1u;
     if (position == 0)
     {
