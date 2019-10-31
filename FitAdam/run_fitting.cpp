@@ -22,7 +22,7 @@
 #include "utils.h"
 #include <thread>
 #include <boost/filesystem.hpp>
-
+#include <GL/glu.h>
 #define ROWS 1080
 #define COLS 1920
 #define FACE_VERIFY_THRESH 0.05
@@ -102,7 +102,7 @@ int main(int argc, char* argv[])
     render->options.meshSolid = true;
     render->options.show_joint = false;
     Renderer::use_color_fbo = false;
-
+    std::cout << gluErrorString(glGetError()) << std::endl;
     /*
     Stage 0: read in data
     */
@@ -118,6 +118,9 @@ int main(int argc, char* argv[])
     f >> json_root;
     calibK[0] = json_root["K"][0u][0u].asDouble(); calibK[1] = json_root["K"][0u][1u].asDouble(); calibK[2] = json_root["K"][0u][2u].asDouble(); calibK[3] = json_root["K"][1u][0u].asDouble(); calibK[4] = json_root["K"][1u][1u].asDouble(); calibK[5] = json_root["K"][1u][2u].asDouble(); calibK[6] = json_root["K"][2u][0u].asDouble(); calibK[7] = json_root["K"][2u][1u].asDouble(); calibK[8] = json_root["K"][2u][2u].asDouble();
     f.close();
+
+    std::cout << gluErrorString(glGetError()) << std::endl;
+
 
     std::vector<std::array<double, 2 * ModelFitter::NUM_KEYPOINTS_2D + 3 * ModelFitter::NUM_PAF_VEC + 2>> net_output;   // read in network output
     for (int i = FLAGS_start; i < FLAGS_end; i++)
@@ -158,6 +161,8 @@ int main(int argc, char* argv[])
         net_output.push_back(net_output_entry); 
     }
 
+    std::cout << gluErrorString(glGetError()) << std::endl;
+
     std::vector<std::vector<cv::Point3i>> dense_constraint;
 
     // initialize total model
@@ -168,10 +173,16 @@ int main(int argc, char* argv[])
                           std::string("/home/seamanj/Workspace/MonocularTotalCapture/FitAdam/model/correspondences_nofeet.txt"));
     LoadCocoplusRegressor(g_total_model, std::string("/home/seamanj/Workspace/MonocularTotalCapture/FitAdam/model/regressor_0n1_root.json"));
 
-    render->CameraMode(0);
+    std::cout << gluErrorString(glGetError()) << std::endl;
+
+
     render->options.K = calibK;
+    render->CameraMode(0);
+
 //    glutDisplayFunc(emptyfunc);
 //    glutMainLoopEvent();
+
+    std::cout << gluErrorString(glGetError()) << std::endl;
 
     /*
     Stage 1: run single frame fitting & refitting
@@ -195,7 +206,7 @@ int main(int argc, char* argv[])
             std::fill(net_output_entry.data() + 43 * 3 + 2 * ModelFitter::NUM_KEYPOINTS_2D, net_output_entry.data() + 63 * 3 + 2 * ModelFitter::NUM_KEYPOINTS_2D, 0.0);
         }
     }
-
+    std::cout << gluErrorString(glGetError()) << std::endl;
     if (FLAGS_stage == 1)
     {
         boost::filesystem::create_directories(FLAGS_root_dirs + "/" + FLAGS_seqName + "/body_3d_frontal/");
@@ -273,18 +284,20 @@ int main(int argc, char* argv[])
             CopyMesh(mesh, vis_data);
             render->options.view_dist = gResultJoint[2 * 3 + 2];
             vis_data.vis_type = 2;
-
+            std::cout << gluErrorString(glGetError()) << std::endl;
             if (image_index == FLAGS_start)
             {
-                render->CameraMode(0);
                 render->options.K = calibK;
+                render->CameraMode(0);
+
                 render->RenderHand(vis_data);
                 vis_data.read_buffer = ret_bytes;
                 render->RenderAndRead();
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             }
-            render->CameraMode(0);
             render->options.K = calibK;
+            render->CameraMode(0);
+
             render->RenderHand(vis_data);
             if (FLAGS_OpenGLactive) render->Display();
 

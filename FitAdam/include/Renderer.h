@@ -2,18 +2,14 @@
 #include "VisualizedData.h"
 #include <string>
 #include <opencv2/opencv.hpp>
-
+#include "tjCamera.hpp"
 // using namespace adam
 // {
 class Renderer
 {
 public:
 	Renderer(int* argc, char** argv);
-    ~Renderer()
-    {
-        free( buffer );
-        OSMesaDestroyContext( ctx );
-    }
+    ~Renderer();
 	void RenderHand(VisualizedData& g_visData);
 	void RenderHandSimple(VisualizedData& g_visData);
 	void RenderDepthMap(VisualizedData& g_visData);
@@ -28,7 +24,7 @@ public:
 	void CameraMode(uint position=0u, int width=1920, int height=1080, double* calibK=NULL);
 	void OrthoMode(float scale, uint position=0u);
 	static bool use_color_fbo;
-    GLubyte *buffer;
+    static GLubyte *buffer;
 private:
 	//initialization functions
 	void simpleInit(); // my simple way of initialization
@@ -58,7 +54,7 @@ private:
     // tj : pointer to buffer
 
     static OSMesaContext ctx;
-
+    static tj::tjCamera m_camera;
 
 	//Call back functions
 	static void reshape(int w, int h);
