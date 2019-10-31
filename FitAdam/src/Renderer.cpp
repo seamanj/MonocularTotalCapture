@@ -16,6 +16,7 @@
 #include <opencv2/core/mat.hpp>
 #include <assert.h>
 #include <Eigen/Dense>
+#include "tjCamera.hpp"
 #define PI 3.14159265
 // #define OPENGL_DEBUG
 #define WIDTH 1920
@@ -43,8 +44,8 @@ VisualizedData* Renderer::pData = NULL;
 VisualizationOptions Renderer::options;
 
 OSMesaContext Renderer::ctx;
-
-
+GLubyte *Renderer::buffer;
+tj::tjCamera Renderer::m_camera;
 static const GLfloat g_vertex_buffer_data[] = {
     -1.0f, -1.0f, 0.0f,
      1.0f, -1.0f, 0.0f,
@@ -76,7 +77,7 @@ Renderer::Renderer(int* argc, char** argv)
        OSMESA_PROFILE, OSMESA_CORE_PROFILE,
        OSMESA_CONTEXT_MAJOR_VERSION, 3,
        OSMESA_CONTEXT_MINOR_VERSION, 3,
-       0 };
+       0 };//OSMESA_COMPAT_PROFILE  OSMESA_CORE_PROFILE
     ctx = OSMesaCreateContextAttribs(attribs, NULL);
     if (!ctx) {
        printf("OSMesaCreateContext failed!\n");
@@ -156,7 +157,7 @@ void Renderer::InitGraphics()
 
 //    glGenBuffers(1, &g_uvBuffer);
 //    glGenBuffers(1, &g_normalBuffer);
-//    glGenBuffers(1, &g_indexBuffer);            //Mesh face's indices
+    glGenBuffers(1, &g_indexBuffer);            //Mesh face's indices
 
 //    //The following is for off-screen rendering
 //    //Create color frame buffer (used to picking)
@@ -225,6 +226,12 @@ void Renderer::InitGraphics()
 //    glDisable(GL_TEXTURE_2D);
 }
 
+
+Renderer::~Renderer()
+{
+    free( buffer );
+    OSMesaDestroyContext( ctx );
+}
 void Renderer::SetShader(const std::string shaderName, GLuint& programId)
 {
     std::string vertexShaderFile = SHADER_ROOT + "/" + shaderName + ".vertexshader";
@@ -353,14 +360,17 @@ void Renderer::simpleInit()
 void Renderer::reshape(int w, int h)
 {
     if(h == 0) h = 1;
+    std::cout << gluErrorString(glGetError()) << std::endl;
     glViewport(0, 0, w, h);
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
+
+
+//    glMatrixMode(GL_PROJECTION);
+//    glLoadIdentity();
     // this section allows for window reshaping while
     // maintaining a "normal" GLUT shape
     if(options.CameraMode == 0u)
     {
-        glFrustum(-options.nRange/2, options.nRange/2, -options.nRange*h/w/2, options.nRange*h/w/2, -options.nRange + options.view_dist, options.nRange + options.view_dist);
+//        glFrustum(-options.nRange/2, options.nRange/2, -options.nRange*h/w/2, options.nRange*h/w/2, -options.nRange + options.view_dist, options.nRange + options.view_dist);
     }
     else if(options.CameraMode == 1u)
     {
@@ -386,15 +396,17 @@ void Renderer::reshape(int w, int h)
         cv::Mat IntrinsicMat = cv::Mat(4, 4, CV_64F, Intrinsics);
         cv::Mat Frustrum = orthoMat*IntrinsicMat;
         Frustrum = Frustrum.t();
-        GLdouble projMatrix[16];
+        float projMatrix[16];
         for (int i = 0; i < 16; i++) projMatrix[i] = ((double*)Frustrum.data)[i];
-        glLoadMatrixd(projMatrix);
+//        glLoadMatrixd(projMatrix);
+        m_camera.setProjectionMatrix(projMatrix);
     }
     else
     {
         assert(options.CameraMode == 2u);
         glOrtho(-w * options.ortho_scale/2, w * options.ortho_scale/2, -h * options.ortho_scale/2, h * options.ortho_scale/2, -options.view_dist, options.view_dist);
     }
+    std::cout << gluErrorString(glGetError()) << std::endl;
 }
 
 void Renderer::RenderHand(VisualizedData& g_visData)
@@ -415,197 +427,197 @@ void Renderer::RenderHandSimple(VisualizedData& g_visData)
 
 void Renderer::SimpleRenderer()
 {
-    if (use_color_fbo)
-    {
-        glBindFramebuffer(GL_FRAMEBUFFER, g_fbo_color);
-        glViewport(0, 0, options.width, options.height);
-        GLenum FBOstatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-        // GLfloat white[3] = {1., 1., 1.};
-        // glClearBufferfv(GL_COLOR, 0, white);
-        if (GL_FRAMEBUFFER_COMPLETE != FBOstatus)
-        {
-            std::cout << "FrameBuffer Fails." << std::endl;
-            exit(0);
-        }
-        static const GLenum draw_buffers[] = {GL_COLOR_ATTACHMENT0};
-        glDrawBuffers(1, draw_buffers);
-    }
-    else
-    {
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-        glViewport(0, 0, options.width, options.height);
-    }
+//    if (use_color_fbo)
+//    {
+//        glBindFramebuffer(GL_FRAMEBUFFER, g_fbo_color);
+//        glViewport(0, 0, options.width, options.height);
+//        GLenum FBOstatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+//        // GLfloat white[3] = {1., 1., 1.};
+//        // glClearBufferfv(GL_COLOR, 0, white);
+//        if (GL_FRAMEBUFFER_COMPLETE != FBOstatus)
+//        {
+//            std::cout << "FrameBuffer Fails." << std::endl;
+//            exit(0);
+//        }
+//        static const GLenum draw_buffers[] = {GL_COLOR_ATTACHMENT0};
+//        glDrawBuffers(1, draw_buffers);
+//    }
+//    else
+//    {
+//        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+//        glViewport(0, 0, options.width, options.height);
+//    }
 
-    glClearColor(1., 1., 1., 0.);
-    // mesh renderer
-    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+//    glClearColor(1., 1., 1., 0.);
+//    // mesh renderer
+//    glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glPushMatrix();
-    if (options.CameraMode == 0u)
-    {
-        gluLookAt(0, -options.view_dist * sin(0.0), -options.view_dist * cos(0.0), 0, 0, 0, 0, -1, 0);
-        glRotatef(options.xrot, 1.0, 0.0, 0.0);
-        glRotatef(options.yrot, 0.0, 1.0, 0.0);
-    }
-    else if (options.CameraMode == 2u)
-    {
-        glRotatef(options.xrot, 1.0, 0.0, 0.0);
-        glRotatef(options.yrot, 0.0, 1.0, 0.0);
-        const float centerx = 1920 * options.ortho_scale / 2;
-        const float centery = 1080 * options.ortho_scale / 2;
-        gluLookAt(centerx, centery, 0, centerx, centery, 1, 0, -1, 0);
-    }
-    else
-    {
-        assert(options.CameraMode == 1u);
-        glTranslatef(0, 0, options.view_dist);
-        glRotatef(options.xrot, 1.0, 0.0, 0.0);
-        glRotatef(options.yrot, 0.0, 1.0, 0.0);
-        glTranslatef(0, 0, -options.view_dist);
-    }
+//    glMatrixMode(GL_MODELVIEW);
+//    glLoadIdentity();
+//    glPushMatrix();
+//    if (options.CameraMode == 0u)
+//    {
+//        gluLookAt(0, -options.view_dist * sin(0.0), -options.view_dist * cos(0.0), 0, 0, 0, 0, -1, 0);
+//        glRotatef(options.xrot, 1.0, 0.0, 0.0);
+//        glRotatef(options.yrot, 0.0, 1.0, 0.0);
+//    }
+//    else if (options.CameraMode == 2u)
+//    {
+//        glRotatef(options.xrot, 1.0, 0.0, 0.0);
+//        glRotatef(options.yrot, 0.0, 1.0, 0.0);
+//        const float centerx = 1920 * options.ortho_scale / 2;
+//        const float centery = 1080 * options.ortho_scale / 2;
+//        gluLookAt(centerx, centery, 0, centerx, centery, 1, 0, -1, 0);
+//    }
+//    else
+//    {
+//        assert(options.CameraMode == 1u);
+//        glTranslatef(0, 0, options.view_dist);
+//        glRotatef(options.xrot, 1.0, 0.0, 0.0);
+//        glRotatef(options.yrot, 0.0, 1.0, 0.0);
+//        glTranslatef(0, 0, -options.view_dist);
+//    }
 
-    if (options.CameraMode == 0u)
-    {
-        cv::Point3d min_s(10000., 10000., 10000.);
-        cv::Point3d max_s(-10000., -10000., -10000.);
-        assert(pData->resultJoint);
-        int start_idx, end_idx;
-        if (pData->vis_type <= 2)
-        {
-            start_idx = 0;
-            if (pData->vis_type == 0)  // for hand
-                end_idx = 21;
-            else if(pData->vis_type == 1)  // for body (SMC order)
-                end_idx = 21;
-            else if (pData->vis_type == 2) // for hand and body
-                end_idx = 62;
-        }
-        else if(pData->vis_type == 3)
-        {
-            start_idx = 21;
-            end_idx = 21 + 21;
-        }
-        else if (pData->vis_type == 4)
-        {
-            start_idx = 21 + 21;
-            end_idx = 21 + 21 + 21;
-        }
-        else
-        {
-            assert(pData->vis_type == 5);
-            start_idx = 15;
-            end_idx = 19;
-        }
-        for (int i = start_idx; i < end_idx; i++)
-        {
-            if (pData->resultJoint[3*i+0] < min_s.x) min_s.x = pData->resultJoint[3*i+0];
-            if (pData->resultJoint[3*i+0] > max_s.x) max_s.x = pData->resultJoint[3*i+0];
-            if (pData->resultJoint[3*i+1] < min_s.y) min_s.y = pData->resultJoint[3*i+1];
-            if (pData->resultJoint[3*i+1] > max_s.y) max_s.y = pData->resultJoint[3*i+1];
-            if (pData->resultJoint[3*i+2] < min_s.z) min_s.z = pData->resultJoint[3*i+2];
-            if (pData->resultJoint[3*i+2] > max_s.z) max_s.z = pData->resultJoint[3*i+2];
-        }
-        const GLfloat centerx = (min_s.x + max_s.x) / 2;
-        const GLfloat centery = (min_s.y + max_s.y) / 2;
-        const GLfloat centerz = (min_s.z + max_s.z) / 2;
-        glTranslated(-centerx, -centery, -centerz);
-    }
+//    if (options.CameraMode == 0u)
+//    {
+//        cv::Point3d min_s(10000., 10000., 10000.);
+//        cv::Point3d max_s(-10000., -10000., -10000.);
+//        assert(pData->resultJoint);
+//        int start_idx, end_idx;
+//        if (pData->vis_type <= 2)
+//        {
+//            start_idx = 0;
+//            if (pData->vis_type == 0)  // for hand
+//                end_idx = 21;
+//            else if(pData->vis_type == 1)  // for body (SMC order)
+//                end_idx = 21;
+//            else if (pData->vis_type == 2) // for hand and body
+//                end_idx = 62;
+//        }
+//        else if(pData->vis_type == 3)
+//        {
+//            start_idx = 21;
+//            end_idx = 21 + 21;
+//        }
+//        else if (pData->vis_type == 4)
+//        {
+//            start_idx = 21 + 21;
+//            end_idx = 21 + 21 + 21;
+//        }
+//        else
+//        {
+//            assert(pData->vis_type == 5);
+//            start_idx = 15;
+//            end_idx = 19;
+//        }
+//        for (int i = start_idx; i < end_idx; i++)
+//        {
+//            if (pData->resultJoint[3*i+0] < min_s.x) min_s.x = pData->resultJoint[3*i+0];
+//            if (pData->resultJoint[3*i+0] > max_s.x) max_s.x = pData->resultJoint[3*i+0];
+//            if (pData->resultJoint[3*i+1] < min_s.y) min_s.y = pData->resultJoint[3*i+1];
+//            if (pData->resultJoint[3*i+1] > max_s.y) max_s.y = pData->resultJoint[3*i+1];
+//            if (pData->resultJoint[3*i+2] < min_s.z) min_s.z = pData->resultJoint[3*i+2];
+//            if (pData->resultJoint[3*i+2] > max_s.z) max_s.z = pData->resultJoint[3*i+2];
+//        }
+//        const GLfloat centerx = (min_s.x + max_s.x) / 2;
+//        const GLfloat centery = (min_s.y + max_s.y) / 2;
+//        const GLfloat centerz = (min_s.z + max_s.z) / 2;
+//        glTranslated(-centerx, -centery, -centerz);
+//    }
 
-    if (pData->bShowBackgroundTexture)
-    {
-        glUseProgram(0);
-        glDisable(GL_LIGHTING);
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, g_rgbfloatTexture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1920, 1080, 0, GL_RGB, GL_UNSIGNED_BYTE, pData->backgroundImage.data);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glBegin(GL_QUADS);
-        glColor3f(1.0, 1.0, 1.0);
-        const float d = 995;
+//    if (pData->bShowBackgroundTexture)
+//    {
+//        glUseProgram(0);
+//        glDisable(GL_LIGHTING);
+//        glEnable(GL_TEXTURE_2D);
+//        glBindTexture(GL_TEXTURE_2D, g_rgbfloatTexture);
+//        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1920, 1080, 0, GL_RGB, GL_UNSIGNED_BYTE, pData->backgroundImage.data);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+//        glBegin(GL_QUADS);
+//        glColor3f(1.0, 1.0, 1.0);
+//        const float d = 995;
 
-        glTexCoord2f(0, 0);
-        Eigen::Map<Eigen::Matrix<double, 3, 3, Eigen::RowMajor>> K(options.K);
-        Eigen::Vector3d P(0, 0, 1);
-        P = K.inverse() * P;
-        P = P / P(2);  // normalize so that z = 1
-        glVertex3f(P(0) * d, P(1) * d, P(2) * d);  // K^{-1} [0, 0, 1]^T
+//        glTexCoord2f(0, 0);
+//        Eigen::Map<Eigen::Matrix<double, 3, 3, Eigen::RowMajor>> K(options.K);
+//        Eigen::Vector3d P(0, 0, 1);
+//        P = K.inverse() * P;
+//        P = P / P(2);  // normalize so that z = 1
+//        glVertex3f(P(0) * d, P(1) * d, P(2) * d);  // K^{-1} [0, 0, 1]^T
 
-        glTexCoord2f(1, 0);
-        P << 1920, 0, 1;
-        P = K.inverse() * P;
-        P = P / P(2);  // normalize so that z = 1
-        glVertex3f(P(0) * d, P(1) * d, P(2) * d);  // K^{-1} [1920, 0, 1]^T
+//        glTexCoord2f(1, 0);
+//        P << 1920, 0, 1;
+//        P = K.inverse() * P;
+//        P = P / P(2);  // normalize so that z = 1
+//        glVertex3f(P(0) * d, P(1) * d, P(2) * d);  // K^{-1} [1920, 0, 1]^T
 
-        glTexCoord2f(1, 1);
-        P << 1920, 1080, 1;
-        P = K.inverse() * P;
-        P = P / P(2);  // normalize so that z = 1
-        glVertex3f(P(0) * d, P(1) * d, P(2) * d);
+//        glTexCoord2f(1, 1);
+//        P << 1920, 1080, 1;
+//        P = K.inverse() * P;
+//        P = P / P(2);  // normalize so that z = 1
+//        glVertex3f(P(0) * d, P(1) * d, P(2) * d);
 
-        glTexCoord2f(0, 1);
-        P << 0, 1080, 1;
-        P = K.inverse() * P;
-        P = P / P(2);  // normalize so that z = 1
-        glVertex3f(P(0) * d, P(1) * d, P(2) * d);
-        glEnd();
-        glDisable(GL_TEXTURE_2D);
-        glEnable(GL_LIGHTING);
-    }
+//        glTexCoord2f(0, 1);
+//        P << 0, 1080, 1;
+//        P = K.inverse() * P;
+//        P = P / P(2);  // normalize so that z = 1
+//        glVertex3f(P(0) * d, P(1) * d, P(2) * d);
+//        glEnd();
+//        glDisable(GL_TEXTURE_2D);
+//        glEnable(GL_LIGHTING);
+//    }
 
-    glUseProgram(0);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+//    glUseProgram(0);
+//    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    //Draw the target joint
-    if (options.show_joint && pData->targetJoint != NULL)
-    {
-        glColor3ub(100u, 100u, 100u);
-        DrawSkeleton(pData->targetJoint, pData->vis_type, pData->connMat[pData->vis_type]);
-    }
-    //Draw the predicted joint
-    if (options.show_joint && pData->resultJoint != NULL)
-    {
-        glColor3ub(50u, 50u, 50u);
-        DrawSkeleton(pData->resultJoint, pData->vis_type, pData->connMat[pData->vis_type]);
-    }
+//    //Draw the target joint
+//    if (options.show_joint && pData->targetJoint != NULL)
+//    {
+//        glColor3ub(100u, 100u, 100u);
+//        DrawSkeleton(pData->targetJoint, pData->vis_type, pData->connMat[pData->vis_type]);
+//    }
+//    //Draw the predicted joint
+//    if (options.show_joint && pData->resultJoint != NULL)
+//    {
+//        glColor3ub(50u, 50u, 50u);
+//        DrawSkeleton(pData->resultJoint, pData->vis_type, pData->connMat[pData->vis_type]);
+//    }
 
-    if (pData->bRenderFloor)  // draw the floor
-    {
-        glDisable(GL_LIGHTING);
-        const int grid_num = 20;
-        const int width = 100;
+//    if (pData->bRenderFloor)  // draw the floor
+//    {
+//        glDisable(GL_LIGHTING);
+//        const int grid_num = 20;
+//        const int width = 100;
 
-        Eigen::Vector3d normal(pData->ground_normal[0], pData->ground_normal[1], pData->ground_normal[2]);
-        normal = normal / normal.norm();
-        Eigen::Vector3d tangent1(normal[0], -normal[2], normal[1]), tangent2(normal[1], -normal[0], normal[2]);
-        Eigen::Vector3d origin(pData->ground_center[0], pData->ground_center[1], pData->ground_center[2]);
-        origin = origin - grid_num * width * (tangent1 + tangent2);
-        for (auto y = 0; y < 2 * grid_num + 1; y++)
-            for (auto x = 0; x < 2 * grid_num + 1; x++)
-            {
-                if ((x + y) % 2 == 0)
-                    glColor3f(1.0, 1.0, 1.0);
-                else
-                    glColor3f(0.7, 0.7, 0.7);
-                Eigen::Vector3d P = origin + x * width * tangent1 + y * width * tangent2;
-                glBegin(GL_QUADS);
-                glVertex3f(P[0], P[1], P[2]);
-                P = P + width * tangent1;
-                glVertex3f(P[0], P[1], P[2]);
-                P = P + width * tangent2;
-                glVertex3f(P[0], P[1], P[2]);
-                P = P - width * tangent1;
-                glVertex3f(P[0], P[1], P[2]);
-                glEnd();
-            }
-        glEnable(GL_LIGHTING);
-    }
+//        Eigen::Vector3d normal(pData->ground_normal[0], pData->ground_normal[1], pData->ground_normal[2]);
+//        normal = normal / normal.norm();
+//        Eigen::Vector3d tangent1(normal[0], -normal[2], normal[1]), tangent2(normal[1], -normal[0], normal[2]);
+//        Eigen::Vector3d origin(pData->ground_center[0], pData->ground_center[1], pData->ground_center[2]);
+//        origin = origin - grid_num * width * (tangent1 + tangent2);
+//        for (auto y = 0; y < 2 * grid_num + 1; y++)
+//            for (auto x = 0; x < 2 * grid_num + 1; x++)
+//            {
+//                if ((x + y) % 2 == 0)
+//                    glColor3f(1.0, 1.0, 1.0);
+//                else
+//                    glColor3f(0.7, 0.7, 0.7);
+//                Eigen::Vector3d P = origin + x * width * tangent1 + y * width * tangent2;
+//                glBegin(GL_QUADS);
+//                glVertex3f(P[0], P[1], P[2]);
+//                P = P + width * tangent1;
+//                glVertex3f(P[0], P[1], P[2]);
+//                P = P + width * tangent2;
+//                glVertex3f(P[0], P[1], P[2]);
+//                P = P - width * tangent1;
+//                glVertex3f(P[0], P[1], P[2]);
+//                glEnd();
+//            }
+//        glEnable(GL_LIGHTING);
+//    }
 
-    glPopMatrix();
-//    glutSwapBuffers();
+//    glPopMatrix();
+////    glutSwapBuffers();
 }
 
 void Renderer::Display()
@@ -634,6 +646,9 @@ void Renderer::SpecialKeys(const int key, const int x, const int y)
 
 void Renderer::MeshRender()
 {
+
+    std::cout << gluErrorString(glGetError()) << std::endl;
+
     if (use_color_fbo)
     {
         glBindFramebuffer(GL_FRAMEBUFFER, g_fbo_color);
@@ -651,11 +666,11 @@ void Renderer::MeshRender()
     }
     else
     {
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+//        glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glViewport(0, 0, options.width, options.height);
     }
 
-    glClearColor(0., 0., 1., 1.);
+    glClearColor(0., 0., 1., 0.);
 
 
 
@@ -664,33 +679,36 @@ void Renderer::MeshRender()
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
 
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glPushMatrix();
-    if (options.CameraMode == 0u)
+//    glMatrixMode(GL_MODELVIEW);
+//    glLoadIdentity();
+//    glPushMatrix();
+    if (options.CameraMode == 0u)// tj : only set once
     {
-        gluLookAt(0, -options.view_dist * sin(0.0), -options.view_dist * cos(0.0), 0, 0, 0, 0, -1, 0);
-        glRotatef(options.xrot, 1.0, 0.0, 0.0);
-        glRotatef(options.yrot, 0.0, 1.0, 0.0);
-    }
-    else if (options.CameraMode == 2u)
-    {
-        glRotatef(options.xrot, 1.0, 0.0, 0.0);
-        glRotatef(options.yrot, 0.0, 1.0, 0.0);
-        const float centerx = 1920 * options.ortho_scale / 2;
-        const float centery = 1080 * options.ortho_scale / 2;
-        gluLookAt(centerx, centery, 0, centerx, centery, 1, 0, -1, 0);
-    }
-    else
-    {
-        assert(options.CameraMode == 1u);
-        glTranslatef(0, 0, options.view_dist);
-        glRotatef(options.xrot, 1.0, 0.0, 0.0);
-        glRotatef(options.yrot, 0.0, 1.0, 0.0);
-        glTranslatef(0, 0, -options.view_dist);
-    }
+        m_camera.orient(glm::vec3(0.f, 0.f, options.view_dist), glm::vec3(0.f, 0.f, 0.f), glm::vec3(0.f, -1.f, 0.f));
 
-    if (options.CameraMode == 0u)
+
+//        gluLookAt(0, -options.view_dist * sin(0.0), -options.view_dist * cos(0.0), 0, 0, 0, 0, -1, 0);
+//        glRotatef(options.xrot, 1.0, 0.0, 0.0);
+//        glRotatef(options.yrot, 0.0, 1.0, 0.0);
+    }
+//    else if (options.CameraMode == 2u)
+//    {
+//        glRotatef(options.xrot, 1.0, 0.0, 0.0);
+//        glRotatef(options.yrot, 0.0, 1.0, 0.0);
+//        const float centerx = 1920 * options.ortho_scale / 2;
+//        const float centery = 1080 * options.ortho_scale / 2;
+//        gluLookAt(centerx, centery, 0, centerx, centery, 1, 0, -1, 0);
+//    }
+//    else
+//    {
+//        assert(options.CameraMode == 1u);
+//        glTranslatef(0, 0, options.view_dist);
+//        glRotatef(options.xrot, 1.0, 0.0, 0.0);
+//        glRotatef(options.yrot, 0.0, 1.0, 0.0);
+//        glTranslatef(0, 0, -options.view_dist);
+//    }
+
+    if (options.CameraMode == 0u)// tj : only once
     {
         cv::Point3d min_s(10000., 10000., 10000.);
         cv::Point3d max_s(-10000., -10000., -10000.);
@@ -734,31 +752,36 @@ void Renderer::MeshRender()
         const GLfloat centerx = (min_s.x + max_s.x) / 2;
         const GLfloat centery = (min_s.y + max_s.y) / 2;
         const GLfloat centerz = (min_s.z + max_s.z) / 2;
-        glTranslated(-centerx, -centery, -centerz);
+//        glTranslated(-centerx, -centery, -centerz);
+
+
+        glm::mat4 translation = glm::translate(glm::mat4(1.f), -glm::vec3(centerx, centery, centerz));//column major
+        m_camera.m_view = m_camera.m_view * translation;
+
     }
 
 
 
-    {
-        glUseProgram(g_shaderProgramID[MODE_DRAW_REDTRI]);
-        // 1rst attribute buffer : vertices
-        glEnableVertexAttribArray(0);
-//        glBindVertexArray(g_vao);
-        glBindBuffer(GL_ARRAY_BUFFER, g_vertexBuffer);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
-        glVertexAttribPointer(
-            0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
-            3,                  // size
-            GL_FLOAT,           // type
-            GL_FALSE,           // normalized?
-            0,                  // stride
-            (void*)0            // array buffer offset
-        );
+//    {
+//        glUseProgram(g_shaderProgramID[MODE_DRAW_REDTRI]);
+//        // 1rst attribute buffer : vertices
+//        glEnableVertexAttribArray(0);
+////        glBindVertexArray(g_vao);
+//        glBindBuffer(GL_ARRAY_BUFFER, g_vertexBuffer);
+//        glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+//        glVertexAttribPointer(
+//            0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+//            3,                  // size
+//            GL_FLOAT,           // type
+//            GL_FALSE,           // normalized?
+//            0,                  // stride
+//            (void*)0            // array buffer offset
+//        );
 
-        glDrawArrays(GL_TRIANGLES, 0, 3); // 3 indices starting at 0 -> 1 triangle
-        glDisableVertexAttribArray(0);
-        glFinish();
-    }
+//        glDrawArrays(GL_TRIANGLES, 0, 3); // 3 indices starting at 0 -> 1 triangle
+//        glDisableVertexAttribArray(0);
+//        glFinish();
+//    }
 
     if (pData->bShowBackgroundTexture)
     {
@@ -805,21 +828,27 @@ void Renderer::MeshRender()
 
 
 
-    if (0)//(options.show_mesh)
+    if (options.show_mesh)
     {
         glEnable(GL_TEXTURE_2D);
         // MVP
         glm::mat4 mvMat,pMat,mvpMat;
-        glGetFloatv(GL_MODELVIEW_MATRIX, &mvMat[0][0]);
-        glGetFloatv(GL_PROJECTION_MATRIX, &pMat[0][0]);
+
+        mvMat = m_camera.getViewMatrix();
+        pMat = m_camera.getProjectionMatrix();
+
+//        glGetFloatv(GL_MODELVIEW_MATRIX, &mvMat[0][0]);
+//        glGetFloatv(GL_PROJECTION_MATRIX, &pMat[0][0]);
         mvpMat = pMat * mvMat;
 
         glUseProgram(g_shaderProgramID[MODE_DRAW_MESH]);
         GLuint MVP_id = glGetUniformLocation(g_shaderProgramID[MODE_DRAW_MESH], "MVP");
         glUniformMatrix4fv(MVP_id, 1, GL_FALSE, &mvpMat[0][0]);
+        std::cout << gluErrorString(glGetError()) << std::endl;
 
         GLuint MV_id = glGetUniformLocation(g_shaderProgramID[MODE_DRAW_MESH], "MV");
         glUniformMatrix4fv(MV_id, 1, GL_FALSE, &mvMat[0][0]);
+        std::cout << gluErrorString(glGetError()) << std::endl;
         // mesh part
         glUseProgram(g_shaderProgramID[MODE_DRAW_MESH]);
         glLineWidth((GLfloat)0.5);
@@ -908,6 +937,7 @@ void Renderer::MeshRender()
         }
         else glDrawArrays(GL_POINTS, 0, pData->m_meshVertices.size());   //Non indexing version
         glDisable(GL_TEXTURE_2D);
+        glFinish();
     }
 
 //    glUseProgram(0);
@@ -958,7 +988,7 @@ void Renderer::MeshRender()
         glEnable(GL_LIGHTING);
     }
 
-    glPopMatrix();
+//    glPopMatrix();
     glFinish();
 
 
@@ -1080,9 +1110,9 @@ void Renderer::RenderAndRead()
     // - tj : useless in windowless mode, instead we refresh manually by calling MeshRender() directly.
     MeshRender(); // tj : trigger manually    
 
-//    for(int i = 0; i < 10000 ; ++i)
-//        std::cout << (int)buffer[i] << " ";
-//    std::cout << std::endl;
+    for(int i = 0; i < 10000 ; ++i)
+        std::cout << (int)buffer[i] << " ";
+    std::cout << std::endl;
 
 
 //    glPixelStorei(GL_PACK_ALIGNMENT, 1);
@@ -1093,7 +1123,7 @@ void Renderer::RenderAndRead()
     //glutPostRedisplay();
     // - tj : useless in windowless model
     g_drawMode = MODE_DRAW_DEFUALT;
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+//    glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glUseProgram(0);
 }
 
@@ -1103,8 +1133,13 @@ void Renderer::CameraMode(uint position, int width, int height, double* calibK)
     if(calibK != NULL) options.K = calibK;
     //glutReshapeWindow(width, height);
     // - tj : useless in windowless model, we trigger manually by calling reshape()
-    reshape(width, height);// tj : trigger directly
+
     options.CameraMode = 1u;
+
+    std::cout << gluErrorString(glGetError()) << std::endl;
+    reshape(width, height);// tj : trigger directly
+    std::cout << gluErrorString(glGetError()) << std::endl;
+
     if (position == 0)
     {
         // look from the front
@@ -1265,23 +1300,23 @@ void Renderer::DepthMapRenderer()
 
 void Renderer::RenderAndReadDepthMap()
 {
-//    glutMainLoopEvent();
-    if (GL_FRAMEBUFFER_COMPLETE != glCheckFramebufferStatus(GL_FRAMEBUFFER))
-    {
-        std::cout << "FrameBuffer Fails." << std::endl;
-        exit(0);
-    }
-    glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glReadPixels(0, 0, 1920, 1080, GL_DEPTH_COMPONENT, GL_FLOAT, pData->read_depth_buffer);
-    const double nearFar_interval = options.zmax - options.zmin;
-    const double nearFar_numerator = - options.zmax * options.zmin / nearFar_interval;
-    for (int i = 0; i < 1920 * 1080; i++) pData->read_depth_buffer[i] = nearFar_numerator / (pData->read_depth_buffer[i] - options.zmax / nearFar_interval);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//    glutPostRedisplay();
-    g_drawMode = MODE_DRAW_DEFUALT;
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glUseProgram(0);
+////    glutMainLoopEvent();
+//    if (GL_FRAMEBUFFER_COMPLETE != glCheckFramebufferStatus(GL_FRAMEBUFFER))
+//    {
+//        std::cout << "FrameBuffer Fails." << std::endl;
+//        exit(0);
+//    }
+//    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+//    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+//    glReadPixels(0, 0, 1920, 1080, GL_DEPTH_COMPONENT, GL_FLOAT, pData->read_depth_buffer);
+//    const double nearFar_interval = options.zmax - options.zmin;
+//    const double nearFar_numerator = - options.zmax * options.zmin / nearFar_interval;
+//    for (int i = 0; i < 1920 * 1080; i++) pData->read_depth_buffer[i] = nearFar_numerator / (pData->read_depth_buffer[i] - options.zmax / nearFar_interval);
+//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+////    glutPostRedisplay();
+//    g_drawMode = MODE_DRAW_DEFUALT;
+//    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+//    glUseProgram(0);
 }
 
 void Renderer::RenderProjection(VisualizedData& g_visData)
@@ -1381,16 +1416,16 @@ void Renderer::ProjectionRenderer()
 void Renderer::RenderAndReadProjection()
 {
 //    glutMainLoopEvent();
-    if (GL_FRAMEBUFFER_COMPLETE != glCheckFramebufferStatus(GL_FRAMEBUFFER))
-    {
-        std::cout << "FrameBuffer Fails." << std::endl;
-        exit(0);
-    }
-    glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glReadPixels(0, 0, 1920, 1080, GL_RGB, GL_FLOAT, pData->read_rgbfloat_buffer);
-//    glutPostRedisplay();
-    g_drawMode = MODE_DRAW_DEFUALT;
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glUseProgram(0);
+//    if (GL_FRAMEBUFFER_COMPLETE != glCheckFramebufferStatus(GL_FRAMEBUFFER))
+//    {
+//        std::cout << "FrameBuffer Fails." << std::endl;
+//        exit(0);
+//    }
+//    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+//    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+//    glReadPixels(0, 0, 1920, 1080, GL_RGB, GL_FLOAT, pData->read_rgbfloat_buffer);
+////    glutPostRedisplay();
+//    g_drawMode = MODE_DRAW_DEFUALT;
+//    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+//    glUseProgram(0);
 }
