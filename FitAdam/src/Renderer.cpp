@@ -152,8 +152,7 @@ void Renderer::InitGraphics()
     glGenBuffers(1, &g_vertexBuffer);           //Vertices of pt cloud or mesh
 
 
-    glBindBuffer(GL_ARRAY_BUFFER, g_vertexBuffer);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+
 
 //    glGenBuffers(1, &g_uvBuffer);
 //    glGenBuffers(1, &g_normalBuffer);
@@ -664,13 +663,89 @@ void Renderer::MeshRender()
     // mesh renderer
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
+
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    glPushMatrix();
+    if (options.CameraMode == 0u)
+    {
+        gluLookAt(0, -options.view_dist * sin(0.0), -options.view_dist * cos(0.0), 0, 0, 0, 0, -1, 0);
+        glRotatef(options.xrot, 1.0, 0.0, 0.0);
+        glRotatef(options.yrot, 0.0, 1.0, 0.0);
+    }
+    else if (options.CameraMode == 2u)
+    {
+        glRotatef(options.xrot, 1.0, 0.0, 0.0);
+        glRotatef(options.yrot, 0.0, 1.0, 0.0);
+        const float centerx = 1920 * options.ortho_scale / 2;
+        const float centery = 1080 * options.ortho_scale / 2;
+        gluLookAt(centerx, centery, 0, centerx, centery, 1, 0, -1, 0);
+    }
+    else
+    {
+        assert(options.CameraMode == 1u);
+        glTranslatef(0, 0, options.view_dist);
+        glRotatef(options.xrot, 1.0, 0.0, 0.0);
+        glRotatef(options.yrot, 0.0, 1.0, 0.0);
+        glTranslatef(0, 0, -options.view_dist);
+    }
+
+    if (options.CameraMode == 0u)
+    {
+        cv::Point3d min_s(10000., 10000., 10000.);
+        cv::Point3d max_s(-10000., -10000., -10000.);
+        assert(pData->resultJoint);
+        int start_idx, end_idx;
+        if (pData->vis_type <= 2)
+        {
+            start_idx = 0;
+            if (pData->vis_type == 0)  // for hand
+                end_idx = 21;
+            else if(pData->vis_type == 1)  // for body (SMC order)
+                end_idx = 21;
+            else if (pData->vis_type == 2) // for hand and body
+                end_idx = 62;
+        }
+        else if(pData->vis_type == 3)
+        {
+            start_idx = 21;
+            end_idx = 21 + 21;
+        }
+        else if (pData->vis_type == 4)
+        {
+            start_idx = 21 + 21;
+            end_idx = 21 + 21 + 21;
+        }
+        else
+        {
+            assert(pData->vis_type == 5);
+            start_idx = 15;
+            end_idx = 19;
+        }
+        for (int i = start_idx; i < end_idx; i++)
+        {
+            if (pData->resultJoint[3*i+0] < min_s.x) min_s.x = pData->resultJoint[3*i+0];
+            if (pData->resultJoint[3*i+0] > max_s.x) max_s.x = pData->resultJoint[3*i+0];
+            if (pData->resultJoint[3*i+1] < min_s.y) min_s.y = pData->resultJoint[3*i+1];
+            if (pData->resultJoint[3*i+1] > max_s.y) max_s.y = pData->resultJoint[3*i+1];
+            if (pData->resultJoint[3*i+2] < min_s.z) min_s.z = pData->resultJoint[3*i+2];
+            if (pData->resultJoint[3*i+2] > max_s.z) max_s.z = pData->resultJoint[3*i+2];
+        }
+        const GLfloat centerx = (min_s.x + max_s.x) / 2;
+        const GLfloat centery = (min_s.y + max_s.y) / 2;
+        const GLfloat centerz = (min_s.z + max_s.z) / 2;
+        glTranslated(-centerx, -centery, -centerz);
+    }
+
+
+
     {
         glUseProgram(g_shaderProgramID[MODE_DRAW_REDTRI]);
         // 1rst attribute buffer : vertices
         glEnableVertexAttribArray(0);
 //        glBindVertexArray(g_vao);
         glBindBuffer(GL_ARRAY_BUFFER, g_vertexBuffer);
-//        glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
         glVertexAttribPointer(
             0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
             3,                  // size
@@ -684,78 +759,6 @@ void Renderer::MeshRender()
         glDisableVertexAttribArray(0);
         glFinish();
     }
-//    glMatrixMode(GL_MODELVIEW);
-//    glLoadIdentity();
-//    glPushMatrix();
-//    if (options.CameraMode == 0u)
-//    {
-//        gluLookAt(0, -options.view_dist * sin(0.0), -options.view_dist * cos(0.0), 0, 0, 0, 0, -1, 0);
-//        glRotatef(options.xrot, 1.0, 0.0, 0.0);
-//        glRotatef(options.yrot, 0.0, 1.0, 0.0);
-//    }
-//    else if (options.CameraMode == 2u)
-//    {
-//        glRotatef(options.xrot, 1.0, 0.0, 0.0);
-//        glRotatef(options.yrot, 0.0, 1.0, 0.0);
-//        const float centerx = 1920 * options.ortho_scale / 2;
-//        const float centery = 1080 * options.ortho_scale / 2;
-//        gluLookAt(centerx, centery, 0, centerx, centery, 1, 0, -1, 0);
-//    }
-//    else
-//    {
-//        assert(options.CameraMode == 1u);
-//        glTranslatef(0, 0, options.view_dist);
-//        glRotatef(options.xrot, 1.0, 0.0, 0.0);
-//        glRotatef(options.yrot, 0.0, 1.0, 0.0);
-//        glTranslatef(0, 0, -options.view_dist);
-//    }
-
-//    if (options.CameraMode == 0u)
-//    {
-//        cv::Point3d min_s(10000., 10000., 10000.);
-//        cv::Point3d max_s(-10000., -10000., -10000.);
-//        assert(pData->resultJoint);
-//        int start_idx, end_idx;
-//        if (pData->vis_type <= 2)
-//        {
-//            start_idx = 0;
-//            if (pData->vis_type == 0)  // for hand
-//                end_idx = 21;
-//            else if(pData->vis_type == 1)  // for body (SMC order)
-//                end_idx = 21;
-//            else if (pData->vis_type == 2) // for hand and body
-//                end_idx = 62;
-//        }
-//        else if(pData->vis_type == 3)
-//        {
-//            start_idx = 21;
-//            end_idx = 21 + 21;
-//        }
-//        else if (pData->vis_type == 4)
-//        {
-//            start_idx = 21 + 21;
-//            end_idx = 21 + 21 + 21;
-//        }
-//        else
-//        {
-//            assert(pData->vis_type == 5);
-//            start_idx = 15;
-//            end_idx = 19;
-//        }
-//        for (int i = start_idx; i < end_idx; i++)
-//        {
-//            if (pData->resultJoint[3*i+0] < min_s.x) min_s.x = pData->resultJoint[3*i+0];
-//            if (pData->resultJoint[3*i+0] > max_s.x) max_s.x = pData->resultJoint[3*i+0];
-//            if (pData->resultJoint[3*i+1] < min_s.y) min_s.y = pData->resultJoint[3*i+1];
-//            if (pData->resultJoint[3*i+1] > max_s.y) max_s.y = pData->resultJoint[3*i+1];
-//            if (pData->resultJoint[3*i+2] < min_s.z) min_s.z = pData->resultJoint[3*i+2];
-//            if (pData->resultJoint[3*i+2] > max_s.z) max_s.z = pData->resultJoint[3*i+2];
-//        }
-//        const GLfloat centerx = (min_s.x + max_s.x) / 2;
-//        const GLfloat centery = (min_s.y + max_s.y) / 2;
-//        const GLfloat centerz = (min_s.z + max_s.z) / 2;
-//        glTranslated(-centerx, -centery, -centerz);
-//    }
 
     if (pData->bShowBackgroundTexture)
     {
@@ -955,9 +958,8 @@ void Renderer::MeshRender()
         glEnable(GL_LIGHTING);
     }
 
-//    glPopMatrix();
-//    glutSwapBuffers();
-//    glFinish();
+    glPopMatrix();
+    glFinish();
 
 
 
@@ -1078,16 +1080,16 @@ void Renderer::RenderAndRead()
     // - tj : useless in windowless mode, instead we refresh manually by calling MeshRender() directly.
     MeshRender(); // tj : trigger manually    
 
-    for(int i = 0; i < 10000 ; ++i)
-        std::cout << (int)buffer[i] << " ";
-    std::cout << std::endl;
+//    for(int i = 0; i < 10000 ; ++i)
+//        std::cout << (int)buffer[i] << " ";
+//    std::cout << std::endl;
 
 
-    glPixelStorei(GL_PACK_ALIGNMENT, 1);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    // glReadPixels(0, 0, options.width, options.height, GL_RGB, GL_UNSIGNED_BYTE, pData->read_buffer);
-    glReadPixels(0, 0, options.width, options.height, GL_RGBA, GL_UNSIGNED_BYTE, pData->read_buffer);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+//    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+//    // glReadPixels(0, 0, options.width, options.height, GL_RGB, GL_UNSIGNED_BYTE, pData->read_buffer);
+//    glReadPixels(0, 0, options.width, options.height, GL_RGBA, GL_UNSIGNED_BYTE, pData->read_buffer);
+//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     //glutPostRedisplay();
     // - tj : useless in windowless model
     g_drawMode = MODE_DRAW_DEFUALT;
