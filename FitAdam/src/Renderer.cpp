@@ -112,9 +112,13 @@ Renderer::Renderer(int* argc, char** argv)
 
 void Renderer::InitGraphics()
 {
-//    glEnable(GL_DEPTH_TEST);
-//    glEnable(GL_BLEND);
-//    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    std::cout << gluErrorString(glGetError()) << std::endl;
+    glEnable(GL_DEPTH_TEST);
+    std::cout << gluErrorString(glGetError()) << std::endl;
+    glEnable(GL_BLEND);
+    std::cout << gluErrorString(glGetError()) << std::endl;
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    std::cout << gluErrorString(glGetError()) << std::endl;
 
 
 
@@ -830,19 +834,23 @@ void Renderer::MeshRender()
 
     if (options.show_mesh)
     {
-        glEnable(GL_TEXTURE_2D);
+        std::cout << gluErrorString(glGetError()) << std::endl;
+//        glEnable(GL_TEXTURE_2D);
         // MVP
         glm::mat4 mvMat,pMat,mvpMat;
-
+        std::cout << gluErrorString(glGetError()) << std::endl;
         mvMat = m_camera.getViewMatrix();
         pMat = m_camera.getProjectionMatrix();
-
+        std::cout << gluErrorString(glGetError()) << std::endl;
 //        glGetFloatv(GL_MODELVIEW_MATRIX, &mvMat[0][0]);
 //        glGetFloatv(GL_PROJECTION_MATRIX, &pMat[0][0]);
         mvpMat = pMat * mvMat;
 
+        std::cout << gluErrorString(glGetError()) << std::endl;
         glUseProgram(g_shaderProgramID[MODE_DRAW_MESH]);
+        std::cout << gluErrorString(glGetError()) << std::endl;
         GLuint MVP_id = glGetUniformLocation(g_shaderProgramID[MODE_DRAW_MESH], "MVP");
+        std::cout << gluErrorString(glGetError()) << std::endl;
         glUniformMatrix4fv(MVP_id, 1, GL_FALSE, &mvpMat[0][0]);
         std::cout << gluErrorString(glGetError()) << std::endl;
 
@@ -936,7 +944,7 @@ void Renderer::MeshRender()
             );
         }
         else glDrawArrays(GL_POINTS, 0, pData->m_meshVertices.size());   //Non indexing version
-        glDisable(GL_TEXTURE_2D);
+//        glDisable(GL_TEXTURE_2D);
         glFinish();
     }
 
@@ -1110,9 +1118,9 @@ void Renderer::RenderAndRead()
     // - tj : useless in windowless mode, instead we refresh manually by calling MeshRender() directly.
     MeshRender(); // tj : trigger manually    
 
-    for(int i = 0; i < 10000 ; ++i)
-        std::cout << (int)buffer[i] << " ";
-    std::cout << std::endl;
+//    for(int i = 0; i < 10000 ; ++i)
+//        std::cout << (int)buffer[i] << " ";
+//    std::cout << std::endl;
 
 
 //    glPixelStorei(GL_PACK_ALIGNMENT, 1);
