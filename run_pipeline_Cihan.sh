@@ -18,10 +18,10 @@ upperBody=-f
 #dataDir=/vol/research/extol/personal/cihan/data/MonocularTotalCapture/
 # Git clone openpose to ../openpose and compile with cmake
 #openposeDir=/opt/openpose
-openposeDir=../openpose
+openposeDir=/opt/openpose
 # Where the monocular total capture is installed
-#MTCDir=/opt/MTC
-MTCDir=/home/seamanj/Workspace/MonocularTotalCapture
+MTCDir=/opt/MTC
+#MTCDir=/home/seamanj/Workspace/MonocularTotalCapture
 
 # convert to absolute path
 MTCDir=$(readlink -f $MTCDir)
@@ -175,7 +175,7 @@ ffmpeg -i body_3d_frontal_tracking/%04d.png -c:v libx264 $seqName"_body_3d_front
 #
 
 # tj : merge multiple videos into one
-cd $dataDir/$seqName
+# cd $dataDir/$seqName
 
 
 # tj : -filter_complex filtergraph (global)
@@ -185,34 +185,34 @@ cd $dataDir/$seqName
 # tj : -crf : The range of the CRF scale is 0–51, where 0 is lossless, 23 is the default, and 51 is worst quality possible. 
 # -preset : A preset is a collection of options that will provide a certain encoding speed to compression ratio
 # https://trac.ffmpeg.org/wiki/Encode/H.264
-ffmpeg \
-  -i $seqName".mp4" \
-  -i $seqName"_openpose.mp4" \
-  -filter_complex "hstack,format=yuv420p" \
-  -c:v libx264 \
-  -crf 18 \
-  -preset veryfast \
-  top.mp4
-
-ffmpeg \
-  -i $seqName"_body_3d_frontal.mp4" \
-  -i $seqName"_body_3d_frontal_tracking.mp4" \
-  -filter_complex "hstack,format=yuv420p" \
-  -c:v libx264 \
-  -crf 18 \
-  -preset veryfast \
-  -preset veryfast \
-  bottom.mp4
-
-ffmpeg \
-  -i top.mp4 \
-  -i bottom.mp4 \
-  -filter_complex "vstack,format=yuv420p" \
-  -c:v libx264 \
-  -crf 18 \
-  -preset veryfast \
-  -preset veryfast \
-  $seqName"_monocular_total_capture.mp4"
+#ffmpeg \
+#  -i $seqName".mp4" \
+#  -i $seqName"_openpose.mp4" \
+#  -filter_complex "hstack,format=yuv420p" \
+#  -c:v libx264 \
+#  -crf 18 \
+#  -preset veryfast \
+#  top.mp4
+#
+#ffmpeg \
+#  -i $seqName"_body_3d_frontal.mp4" \
+#  -i $seqName"_body_3d_frontal_tracking.mp4" \
+#  -filter_complex "hstack,format=yuv420p" \
+#  -c:v libx264 \
+#  -crf 18 \
+#  -preset veryfast \
+#  -preset veryfast \
+#  bottom.mp4
+#
+#ffmpeg \
+#  -i top.mp4 \
+#  -i bottom.mp4 \
+#  -filter_complex "vstack,format=yuv420p" \
+#  -c:v libx264 \
+#  -crf 18 \
+#  -preset veryfast \
+#  -preset veryfast \
+#  $seqName"_monocular_total_capture.mp4"
 #
 #rm top.mp4
 #rm bottom.mp4
