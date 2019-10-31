@@ -1,4 +1,4 @@
-#include <GL/glew.h>
+//#include <GL/glew.h>
 #include <iostream>
 #include <fstream>
 #include <cstdio>
@@ -14,7 +14,7 @@
 #include <KinematicModel.h>
 #include <cassert>
 #include <opencv2/highgui/highgui.hpp>
-#include <GL/freeglut.h>
+//#include <GL/freeglut.h>
 #include <pose_to_transforms.h>
 #include "meshTrackingProj.h"
 #include "SGSmooth.hpp"
@@ -101,7 +101,7 @@ int main(int argc, char* argv[])
     render.reset(new Renderer(&argc, argv));  // initialize the OpenGL renderer
     render->options.meshSolid = true;
     render->options.show_joint = false;
-    Renderer::use_color_fbo = true;
+    Renderer::use_color_fbo = false;
 
     /*
     Stage 0: read in data
@@ -161,15 +161,17 @@ int main(int argc, char* argv[])
     std::vector<std::vector<cv::Point3i>> dense_constraint;
 
     // initialize total model
-    LoadTotalModelFromObj(g_total_model, std::string("model/mesh_nofeet.obj"));
-    LoadModelColorFromObj(g_total_model, std::string("model/nofeetmesh_byTomas_bottom.obj"));  // contain the color information
-    LoadTotalDataFromJson(g_total_model, std::string("model/adam_v1_plus2.json"), std::string("model/adam_blendshapes_348_delta_norm.json"), std::string("model/correspondences_nofeet.txt"));
-    LoadCocoplusRegressor(g_total_model, std::string("model/regressor_0n1_root.json"));
+    LoadTotalModelFromObj(g_total_model, std::string("/home/seamanj/Workspace/MonocularTotalCapture/FitAdam/model/mesh_nofeet.obj"));
+    LoadModelColorFromObj(g_total_model, std::string("/home/seamanj/Workspace/MonocularTotalCapture/FitAdam/model/nofeetmesh_byTomas_bottom.obj"));  // contain the color information
+    LoadTotalDataFromJson(g_total_model, std::string("/home/seamanj/Workspace/MonocularTotalCapture/FitAdam/model/adam_v1_plus2.json"),
+                          std::string("/home/seamanj/Workspace/MonocularTotalCapture/FitAdam/model/adam_blendshapes_348_delta_norm.json"),
+                          std::string("/home/seamanj/Workspace/MonocularTotalCapture/FitAdam/model/correspondences_nofeet.txt"));
+    LoadCocoplusRegressor(g_total_model, std::string("/home/seamanj/Workspace/MonocularTotalCapture/FitAdam/model/regressor_0n1_root.json"));
 
-    render->CameraMode(0);
+//    render->CameraMode(0);
     render->options.K = calibK;
-    glutDisplayFunc(emptyfunc);
-    glutMainLoopEvent();
+//    glutDisplayFunc(emptyfunc);
+//    glutMainLoopEvent();
 
     /*
     Stage 1: run single frame fitting & refitting
@@ -274,14 +276,14 @@ int main(int argc, char* argv[])
 
             if (image_index == FLAGS_start)
             {
-                render->CameraMode(0);
+//                render->CameraMode(0);
                 render->options.K = calibK;
                 render->RenderHand(vis_data);
                 vis_data.read_buffer = ret_bytes;
                 render->RenderAndRead();
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             }
-            render->CameraMode(0);
+//            render->CameraMode(0);
             render->options.K = calibK;
             render->RenderHand(vis_data);
             if (FLAGS_OpenGLactive) render->Display();
@@ -290,9 +292,10 @@ int main(int argc, char* argv[])
             render->RenderAndRead();
 
             // convert to opencv format
-            cv::Mat frame(ROWS, COLS, CV_8UC4, ret_bytes);
+            //cv::Mat frame(ROWS, COLS, CV_8UC4, ret_bytes);
+            cv::Mat frame(ROWS, COLS, CV_8UC4, render->buffer);
             cv::flip(frame, frame, 0);
-            // cv::cvtColor(frame, frame, cv::COLOR_RGBA2BGR);  // convert to BGR
+            cv::cvtColor(frame, frame, cv::COLOR_RGBA2BGRA);  // convert to BGR
 
             sprintf(basename, "%s_%08d.png", FLAGS_seqName.c_str(), image_index);
             const std::string imgName = FLAGS_root_dirs + "/" + FLAGS_seqName + "/raw_image/" + basename;
@@ -304,7 +307,7 @@ int main(int argc, char* argv[])
             // cv::Mat aligned = alignMeshImage(frame, cv::imread(imgName));
             sprintf(basename, "%04d.png", image_index);
             const std::string filename = FLAGS_root_dirs + "/" + FLAGS_seqName + "/body_3d_frontal/" + basename;
-            assert(cv::imwrite(filename, aligned));
+            assert(cv::imwrite(filename, frame));
 
             writeFrameParam(param_filename, refit_params);
 

@@ -9,12 +9,17 @@ class Renderer
 {
 public:
 	Renderer(int* argc, char** argv);
+    ~Renderer()
+    {
+        free( buffer );
+        OSMesaDestroyContext( ctx );
+    }
 	void RenderHand(VisualizedData& g_visData);
 	void RenderHandSimple(VisualizedData& g_visData);
 	void RenderDepthMap(VisualizedData& g_visData);
 	void RenderProjection(VisualizedData& g_visData);
 	// static void IdleSaveImage();
-	static void RenderAndRead();
+    void RenderAndRead();
 	static void RenderAndReadDepthMap();
 	static void RenderAndReadProjection();
 	void Display();
@@ -23,13 +28,16 @@ public:
 	void CameraMode(uint position=0u, int width=1920, int height=1080, double* calibK=NULL);
 	void OrthoMode(float scale, uint position=0u);
 	static bool use_color_fbo;
+    GLubyte *buffer;
 private:
 	//initialization functions
 	void simpleInit(); // my simple way of initialization
 	void InitGraphics();
 	static const std::string SHADER_ROOT;
-	static GLuint g_shaderProgramID[8];
-	enum draw_mode {MODE_DRAW_DEFUALT=0, MODE_DRAW_SELECTION_PTCLOUD, MODE_DRAW_DEPTH_RENDER, MODE_DRAW_NORMALMAP, MODE_DRAW_PTCLOUD, MODE_DRAW_MESH, MODE_DRAW_MESH_TEXTURE, MODE_DRAW_PROJECTION};
+    static GLuint g_shaderProgramID[9];
+    enum draw_mode {MODE_DRAW_DEFUALT=0, MODE_DRAW_SELECTION_PTCLOUD=1, MODE_DRAW_DEPTH_RENDER=2, MODE_DRAW_NORMALMAP=3,
+                    MODE_DRAW_PTCLOUD=4, MODE_DRAW_MESH=5, MODE_DRAW_MESH_TEXTURE=6, MODE_DRAW_PROJECTION=7,
+                    MODE_DRAW_REDTRI=8};
 	void SetShader(const std::string shaderName, GLuint& programId);
 	GLuint LoadShaderFiles(const char* vertex_file_path, const char* fragment_file_path, bool verbose=false);
 
@@ -46,6 +54,11 @@ private:
 
 	//pointer to data
 	static VisualizedData* pData;
+
+    // tj : pointer to buffer
+
+    static OSMesaContext ctx;
+
 
 	//Call back functions
 	static void reshape(int w, int h);

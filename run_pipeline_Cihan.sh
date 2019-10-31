@@ -17,9 +17,11 @@ upperBody=-f
 # Assume that you already have a video in $dataDir/(seqName)/(seqName).mp4 
 #dataDir=/vol/research/extol/personal/cihan/data/MonocularTotalCapture/
 # Git clone openpose to ../openpose and compile with cmake
-openposeDir=/opt/openpose
+#openposeDir=/opt/openpose
+openposeDir=../openpose
 # Where the monocular total capture is installed
-MTCDir=/opt/MTC
+#MTCDir=/opt/MTC
+MTCDir=/home/seamanj/Workspace/MonocularTotalCapture
 
 # convert to absolute path
 MTCDir=$(readlink -f $MTCDir)
@@ -57,12 +59,12 @@ if [ ! -d openpose_result ]; then
 	--hand_scale_number 8 --hand_scale_range 0.4 --hand \
 	--image_dir $dataDir/$seqName/raw_image \
 	--write_json $dataDir/$seqName/openpose_result \
-	--render_pose 1 \
+	--render_pose 0 \
 	--display 0 \
 	--model_pose BODY_25 \
 	--number_people_max 1 \
-	--write_video $dataDir/$seqName/$seqName"_openpose.mp4" \
-	--write_video_fps 25
+	#--write_video $dataDir/$seqName/$seqName"_openpose.mp4" \
+	#--write_video_fps 25
 else  # openpose didn't run on all raw images
 	num_openpose_result=$(ls $dataDir/$seqName/openpose_result/$seqName_* | wc -l)
 	echo "num_openpose_result: $num_openpose_result"
@@ -73,12 +75,12 @@ else  # openpose didn't run on all raw images
 		--hand_scale_number 8 --hand_scale_range 0.4 --hand \
 		--image_dir $dataDir/$seqName/raw_image \
 		--write_json $dataDir/$seqName/openpose_result \
-		--render_pose 1 \
+		--render_pose 0 \
 		--display 0 \
 		--model_pose BODY_25 \
 		--number_people_max 1 \
-		--write_video $dataDir/$seqName/$seqName"_openpose.mp4" \
-		--write_video_fps 25
+		#--write_video $dataDir/$seqName/$seqName"_openpose.mp4" \
+		#--write_video_fps 25
 	fi
 fi
 
