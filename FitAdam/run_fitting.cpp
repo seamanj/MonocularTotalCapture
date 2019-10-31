@@ -168,7 +168,7 @@ int main(int argc, char* argv[])
                           std::string("/home/seamanj/Workspace/MonocularTotalCapture/FitAdam/model/correspondences_nofeet.txt"));
     LoadCocoplusRegressor(g_total_model, std::string("/home/seamanj/Workspace/MonocularTotalCapture/FitAdam/model/regressor_0n1_root.json"));
 
-//    render->CameraMode(0);
+    render->CameraMode(0);
     render->options.K = calibK;
 //    glutDisplayFunc(emptyfunc);
 //    glutMainLoopEvent();
@@ -276,14 +276,14 @@ int main(int argc, char* argv[])
 
             if (image_index == FLAGS_start)
             {
-//                render->CameraMode(0);
+                render->CameraMode(0);
                 render->options.K = calibK;
                 render->RenderHand(vis_data);
                 vis_data.read_buffer = ret_bytes;
                 render->RenderAndRead();
                 std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             }
-//            render->CameraMode(0);
+            render->CameraMode(0);
             render->options.K = calibK;
             render->RenderHand(vis_data);
             if (FLAGS_OpenGLactive) render->Display();
