@@ -1,7 +1,10 @@
-#include <GL/glew.h>
+//#include <GL/glew.h>
 #include "Renderer.h"
-#include <GL/glut.h>    
-#include <GL/freeglut.h>    
+//#include <GL/glut.h>
+//#include <GL/freeglut.h>
+#include <GL/glu.h>
+#include <GL/osmesa.h>
+#include <GL/glext.h>
 #include <glm/glm.hpp>
 #include <fstream>
 #include <iostream>
@@ -15,9 +18,14 @@
 #include <Eigen/Dense>
 #define PI 3.14159265
 // #define OPENGL_DEBUG
+#define WIDTH 1920
+#define HEIGHT 1080
 
-const std::string Renderer::SHADER_ROOT = "./Shaders/";
-GLuint Renderer::g_shaderProgramID[8];
+
+#include "glewfun.hpp"
+
+const std::string Renderer::SHADER_ROOT = "/home/seamanj/Workspace/MonocularTotalCapture/FitAdam/Shaders";//"./Shaders/";
+GLuint Renderer::g_shaderProgramID[9];
 
 int Renderer::g_drawMode = 0;
 GLuint Renderer::g_vao = 0;     //Vertex Array: only need one, before starting opengl window
@@ -33,6 +41,15 @@ GLint Renderer::window_id;
 
 VisualizedData* Renderer::pData = NULL;
 VisualizationOptions Renderer::options;
+
+OSMesaContext Renderer::ctx;
+
+
+static const GLfloat g_vertex_buffer_data[] = {
+    -1.0f, -1.0f, 0.0f,
+     1.0f, -1.0f, 0.0f,
+     0.0f,  1.0f, 0.0f,
+};
 
 #ifdef OPENGL_DEBUG
 void GLAPIENTRY MessageCallback( GLenum source,
@@ -51,29 +68,61 @@ void GLAPIENTRY MessageCallback( GLenum source,
 
 Renderer::Renderer(int* argc, char** argv)
 {
-    glutInit(argc, argv);
-    glutInitWindowSize(options.width, options.height);
-    glutInitWindowPosition(200, 0);
-    glutInitDisplayMode ( GLUT_RGBA  | GLUT_DOUBLE | GLUT_DEPTH | GLUT_MULTISAMPLE);
-    glEnable(GL_MULTISAMPLE);
-    window_id = glutCreateWindow("Adam Model Renderer");
-    // tj - : work in windowless mode
-    glutHideWindow();
+    static const int attribs[] = {
+       OSMESA_FORMAT, OSMESA_RGBA,
+       OSMESA_DEPTH_BITS, 32,
+       OSMESA_STENCIL_BITS, 0,
+       OSMESA_ACCUM_BITS, 0,
+       OSMESA_PROFILE, OSMESA_CORE_PROFILE,
+       OSMESA_CONTEXT_MAJOR_VERSION, 3,
+       OSMESA_CONTEXT_MINOR_VERSION, 3,
+       0 };
+    ctx = OSMesaCreateContextAttribs(attribs, NULL);
+    if (!ctx) {
+       printf("OSMesaCreateContext failed!\n");
+       return;
+    }
+
+    /* Allocate the image buffer */
+    buffer = (GLubyte *) malloc( WIDTH * HEIGHT * 4 * sizeof(GLubyte));
+    if (!buffer) {
+       printf("Alloc image buffer failed!\n");
+       return;
+    }
+
+    /* Bind the buffer to the context and make it current */
+    if (!OSMesaMakeCurrent( ctx, buffer, GL_UNSIGNED_BYTE, WIDTH, HEIGHT )) {
+       printf("OSMesaMakeCurrent failed!\n");
+       return;
+    }
+
+
+//    glutInit(argc, argv);
+//    glutInitWindowSize(options.width, options.height);
+//    glutInitWindowPosition(200, 0);
+//    glutInitDisplayMode ( GLUT_RGBA  | GLUT_DOUBLE | GLUT_DEPTH | GLUT_MULTISAMPLE);
+//    glEnable(GL_MULTISAMPLE);
+//    window_id = glutCreateWindow("Adam Model Renderer");
+//    // tj - : work in windowless mode
+//    glutHideWindow();
     this->InitGraphics();
-    this->simpleInit();
+//    this->simpleInit();
 }
 
 void Renderer::InitGraphics()
 {
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+//    glEnable(GL_DEPTH_TEST);
+//    glEnable(GL_BLEND);
+//    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+
+
     // glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE);
 
-    if (glewInit() != GLEW_OK) {
-        std::string errorMessage("Failed to initialize GLEW");
-        throw std::runtime_error(errorMessage);
-    }
+//    if (glewInit() != GLEW_OK) {
+//        std::string errorMessage("Failed to initialize GLEW");
+//        throw std::runtime_error(errorMessage);
+//    }
 
     this->SetShader("SimplestShader", g_shaderProgramID[MODE_DRAW_DEFUALT]);
     this->SetShader("SimplestShader", g_shaderProgramID[MODE_DRAW_PTCLOUD]);
@@ -83,6 +132,7 @@ void Renderer::InitGraphics()
     this->SetShader("Mesh", g_shaderProgramID[MODE_DRAW_MESH]);
     this->SetShader("Mesh_texture_shader", g_shaderProgramID[MODE_DRAW_MESH_TEXTURE]);
     this->SetShader("Project2D", g_shaderProgramID[MODE_DRAW_PROJECTION]);
+    this->SetShader("RedTri", g_shaderProgramID[MODE_DRAW_REDTRI]);
 
 #ifdef OPENGL_DEBUG
     // During init, enable debug output
@@ -90,8 +140,8 @@ void Renderer::InitGraphics()
     glDebugMessageCallback( MessageCallback, 0 );
 #endif
 
-    glUseProgram(0);
-    g_drawMode = MODE_DRAW_DEFUALT;
+//    glUseProgram(0);
+//    g_drawMode = MODE_DRAW_DEFUALT;
 
     //The following is only used to draw 3D point cloud (or the trajectory cloud at a time)
     //Vertex Array
@@ -100,75 +150,80 @@ void Renderer::InitGraphics()
 
     //Vertex buffer
     glGenBuffers(1, &g_vertexBuffer);           //Vertices of pt cloud or mesh
-    glGenBuffers(1, &g_uvBuffer);
-    glGenBuffers(1, &g_normalBuffer);
-    glGenBuffers(1, &g_indexBuffer);            //Mesh face's indices
 
-    //The following is for off-screen rendering
-    //Create color frame buffer (used to picking)
-    glEnable(GL_TEXTURE_2D);
-    glGenFramebuffers(1, &g_fbo_color);
-    glBindFramebuffer(GL_FRAMEBUFFER, g_fbo_color);
-    glGenTextures(1, &g_colorTexture);
-    glBindTexture(GL_TEXTURE_2D, g_colorTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, g_colorTextureBufferWidth, g_colorTextureBufferHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);        //1920, 1080 is the maximum available windows size
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glFramebufferTexture(GL_FRAMEBUFFER,
-                         GL_COLOR_ATTACHMENT0,
-                         g_colorTexture, 0);
-    glGenRenderbuffers(1, &g_depth_renderbuffer);   // a depth buffer is needed for FBO rendering
-    glBindRenderbuffer(GL_RENDERBUFFER, g_depth_renderbuffer);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 1920, 1080);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, g_depth_renderbuffer);
-    if(GL_FRAMEBUFFER_COMPLETE != glCheckFramebufferStatus(GL_FRAMEBUFFER))
-    {
-        printf("Failed in color framebuffer setting\n");
-        return;
-    }
 
-    //Create depth frame buffer (used to depth rendering)
-    glGenFramebuffers(1, &g_fbo_depth);
-    glBindFramebuffer(GL_FRAMEBUFFER, g_fbo_depth);
-    glGenTextures(1, &g_depthTexture);
-    glBindTexture(GL_TEXTURE_2D, g_depthTexture);
-    // glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT32, 640, 480, 0,GL_DEPTH_COMPONENT, GL_DOUBLE, 0);
-    // glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT32, 1920, 1080, 0, GL_DEPTH_COMPONENT, GL_DOUBLE, 0);        //1920, 1080 is the maximum
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, 1920, 1080, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
-    // We're going to read from this, but it won't have mipmaps,
-    // so turn off mipmaps for this texture.
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glFramebufferTexture(GL_FRAMEBUFFER,
-                         GL_DEPTH_ATTACHMENT,
-                         g_depthTexture, 0);
-    if(GL_FRAMEBUFFER_COMPLETE != glCheckFramebufferStatus(GL_FRAMEBUFFER))
-    {
-        printf("Failed in depth framebuffer setting\n");
-        return;
-    }
+    glBindBuffer(GL_ARRAY_BUFFER, g_vertexBuffer);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
 
-    //Create rgb float frame buffer
-    glGenFramebuffers(1, &g_fbo_rgbfloat);
-    glBindFramebuffer(GL_FRAMEBUFFER, g_fbo_rgbfloat);
-    glGenTextures(1, &g_rgbfloatTexture);
-    glBindTexture(GL_TEXTURE_2D, g_rgbfloatTexture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, 1920, 1080, 0, GL_RGB, GL_FLOAT, 0);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, g_rgbfloatTexture, 0);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, g_depth_renderbuffer); // also attach the depth renderbuffer to this framebuffer
-    if(GL_FRAMEBUFFER_COMPLETE != glCheckFramebufferStatus(GL_FRAMEBUFFER))
-    {
-        printf("Failed in RGFloat framebuffer setting\n");
-        exit(0);
-    }
+//    glGenBuffers(1, &g_uvBuffer);
+//    glGenBuffers(1, &g_normalBuffer);
+//    glGenBuffers(1, &g_indexBuffer);            //Mesh face's indices
 
-    glGenFramebuffers(1, &g_imageTexture);
+//    //The following is for off-screen rendering
+//    //Create color frame buffer (used to picking)
+//    glEnable(GL_TEXTURE_2D);
+//    glGenFramebuffers(1, &g_fbo_color);
+//    glBindFramebuffer(GL_FRAMEBUFFER, g_fbo_color);
+//    glGenTextures(1, &g_colorTexture);
+//    glBindTexture(GL_TEXTURE_2D, g_colorTexture);
+//    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, g_colorTextureBufferWidth, g_colorTextureBufferHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);        //1920, 1080 is the maximum available windows size
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//    glFramebufferTexture(GL_FRAMEBUFFER,
+//                         GL_COLOR_ATTACHMENT0,
+//                         g_colorTexture, 0);
+//    glGenRenderbuffers(1, &g_depth_renderbuffer);   // a depth buffer is needed for FBO rendering
+//    glBindRenderbuffer(GL_RENDERBUFFER, g_depth_renderbuffer);
+//    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 1920, 1080);
+//    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, g_depth_renderbuffer);
+//    if(GL_FRAMEBUFFER_COMPLETE != glCheckFramebufferStatus(GL_FRAMEBUFFER))
+//    {
+//        printf("Failed in color framebuffer setting\n");
+//        return;
+//    }
+
+//    //Create depth frame buffer (used to depth rendering)
+//    glGenFramebuffers(1, &g_fbo_depth);
+//    glBindFramebuffer(GL_FRAMEBUFFER, g_fbo_depth);
+//    glGenTextures(1, &g_depthTexture);
+//    glBindTexture(GL_TEXTURE_2D, g_depthTexture);
+//    // glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT32, 640, 480, 0,GL_DEPTH_COMPONENT, GL_DOUBLE, 0);
+//    // glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT32, 1920, 1080, 0, GL_DEPTH_COMPONENT, GL_DOUBLE, 0);        //1920, 1080 is the maximum
+//    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, 1920, 1080, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+//    // We're going to read from this, but it won't have mipmaps,
+//    // so turn off mipmaps for this texture.
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//    glFramebufferTexture(GL_FRAMEBUFFER,
+//                         GL_DEPTH_ATTACHMENT,
+//                         g_depthTexture, 0);
+//    if(GL_FRAMEBUFFER_COMPLETE != glCheckFramebufferStatus(GL_FRAMEBUFFER))
+//    {
+//        printf("Failed in depth framebuffer setting\n");
+//        return;
+//    }
+
+//    //Create rgb float frame buffer
+//    glGenFramebuffers(1, &g_fbo_rgbfloat);
+//    glBindFramebuffer(GL_FRAMEBUFFER, g_fbo_rgbfloat);
+//    glGenTextures(1, &g_rgbfloatTexture);
+//    glBindTexture(GL_TEXTURE_2D, g_rgbfloatTexture);
+//    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, 1920, 1080, 0, GL_RGB, GL_FLOAT, 0);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, g_rgbfloatTexture, 0);
+//    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, g_depth_renderbuffer); // also attach the depth renderbuffer to this framebuffer
+//    if(GL_FRAMEBUFFER_COMPLETE != glCheckFramebufferStatus(GL_FRAMEBUFFER))
+//    {
+//        printf("Failed in RGFloat framebuffer setting\n");
+//        exit(0);
+//    }
+
+//    glGenFramebuffers(1, &g_imageTexture);
     
-    //Come back to original screen framebuffer
-    glBindFramebuffer(GL_FRAMEBUFFER,0);    
-    glDisable(GL_TEXTURE_2D);
+//    //Come back to original screen framebuffer
+//    glBindFramebuffer(GL_FRAMEBUFFER,0);
+//    glDisable(GL_TEXTURE_2D);
 }
 
 void Renderer::SetShader(const std::string shaderName, GLuint& programId)
@@ -277,7 +332,7 @@ void Renderer::simpleInit()
     GLfloat specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };// <3>
     GLfloat specref[] = { 1.0f, 1.0f, 1.0f, 1.0f };// <4>
     GLfloat light0pos[] = { 0.0f, -1.0f, 0.0f, 0.0f };
-    glClearColor(0.0, 0.0, 0.0, 1.0);
+//    glClearColor(0.0, 0.0, 0.0, 1.0);
     // Enable depth testing
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_LIGHTING);
@@ -291,8 +346,8 @@ void Renderer::simpleInit()
     glMaterialfv(GL_FRONT, GL_SPECULAR, specref);
     glMateriali(GL_FRONT, GL_SHININESS, 128);
 
-    glutReshapeFunc(this->reshape);
-    glutSpecialFunc(this->SpecialKeys);
+//    glutReshapeFunc(this->reshape);
+//    glutSpecialFunc(this->SpecialKeys);
     // -- tj : guess useless in windowless mode
 }
 
@@ -356,7 +411,7 @@ void Renderer::RenderHandSimple(VisualizedData& g_visData)
 {
     // use point cloud renderer
     pData = &g_visData;
-    glutDisplayFunc(SimpleRenderer);
+//    glutDisplayFunc(SimpleRenderer);
 }
 
 void Renderer::SimpleRenderer()
@@ -551,31 +606,31 @@ void Renderer::SimpleRenderer()
     }
 
     glPopMatrix();
-    glutSwapBuffers();
+//    glutSwapBuffers();
 }
 
 void Renderer::Display()
 {
     printf("Starting to display\n");
-    glutMainLoop();
+//    glutMainLoop();
 
 }
 
 void Renderer::SpecialKeys(const int key, const int x, const int y)
 {
-    if(key == GLUT_KEY_UP)
-        Renderer::options.xrot -= 2.0;
-    else if(key == GLUT_KEY_DOWN)
-        Renderer::options.xrot += 2.0;
-    else if(key == GLUT_KEY_LEFT)
-        Renderer::options.yrot -= 2.0;
-    else if(key == GLUT_KEY_RIGHT)
-        Renderer::options.yrot += 2.0;
-    glutPostRedisplay();
-    // Unused arguments (to avoid unused warning)
-    (void)key;
-    (void)x;
-    (void)y;
+//    if(key == GLUT_KEY_UP)
+//        Renderer::options.xrot -= 2.0;
+//    else if(key == GLUT_KEY_DOWN)
+//        Renderer::options.xrot += 2.0;
+//    else if(key == GLUT_KEY_LEFT)
+//        Renderer::options.yrot -= 2.0;
+//    else if(key == GLUT_KEY_RIGHT)
+//        Renderer::options.yrot += 2.0;
+//    glutPostRedisplay();
+//    // Unused arguments (to avoid unused warning)
+//    (void)key;
+//    (void)x;
+//    (void)y;
 }
 
 void Renderer::MeshRender()
@@ -601,82 +656,106 @@ void Renderer::MeshRender()
         glViewport(0, 0, options.width, options.height);
     }
 
-    glClearColor(1., 1., 1., 0.);
+    glClearColor(0., 0., 1., 1.);
+
+
+
+
     // mesh renderer
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glPushMatrix();
-    if (options.CameraMode == 0u)
     {
-        gluLookAt(0, -options.view_dist * sin(0.0), -options.view_dist * cos(0.0), 0, 0, 0, 0, -1, 0);
-        glRotatef(options.xrot, 1.0, 0.0, 0.0);
-        glRotatef(options.yrot, 0.0, 1.0, 0.0);
-    }
-    else if (options.CameraMode == 2u)
-    {
-        glRotatef(options.xrot, 1.0, 0.0, 0.0);
-        glRotatef(options.yrot, 0.0, 1.0, 0.0);
-        const float centerx = 1920 * options.ortho_scale / 2;
-        const float centery = 1080 * options.ortho_scale / 2;
-        gluLookAt(centerx, centery, 0, centerx, centery, 1, 0, -1, 0);
-    }
-    else
-    {
-        assert(options.CameraMode == 1u);
-        glTranslatef(0, 0, options.view_dist);
-        glRotatef(options.xrot, 1.0, 0.0, 0.0);
-        glRotatef(options.yrot, 0.0, 1.0, 0.0);
-        glTranslatef(0, 0, -options.view_dist);
-    }
+        glUseProgram(g_shaderProgramID[MODE_DRAW_REDTRI]);
+        // 1rst attribute buffer : vertices
+        glEnableVertexAttribArray(0);
+//        glBindVertexArray(g_vao);
+        glBindBuffer(GL_ARRAY_BUFFER, g_vertexBuffer);
+//        glBufferData(GL_ARRAY_BUFFER, sizeof(g_vertex_buffer_data), g_vertex_buffer_data, GL_STATIC_DRAW);
+        glVertexAttribPointer(
+            0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
+            3,                  // size
+            GL_FLOAT,           // type
+            GL_FALSE,           // normalized?
+            0,                  // stride
+            (void*)0            // array buffer offset
+        );
 
-    if (options.CameraMode == 0u)
-    {
-        cv::Point3d min_s(10000., 10000., 10000.);
-        cv::Point3d max_s(-10000., -10000., -10000.);
-        assert(pData->resultJoint);
-        int start_idx, end_idx;
-        if (pData->vis_type <= 2)
-        {
-            start_idx = 0;
-            if (pData->vis_type == 0)  // for hand
-                end_idx = 21;
-            else if(pData->vis_type == 1)  // for body (SMC order)
-                end_idx = 21;
-            else if (pData->vis_type == 2) // for hand and body
-                end_idx = 62;
-        }
-        else if(pData->vis_type == 3)
-        {
-            start_idx = 21;
-            end_idx = 21 + 21;
-        }
-        else if (pData->vis_type == 4)
-        {
-            start_idx = 21 + 21;
-            end_idx = 21 + 21 + 21;
-        }
-        else
-        {
-            assert(pData->vis_type == 5);
-            start_idx = 15;
-            end_idx = 19;
-        }
-        for (int i = start_idx; i < end_idx; i++)
-        {
-            if (pData->resultJoint[3*i+0] < min_s.x) min_s.x = pData->resultJoint[3*i+0];
-            if (pData->resultJoint[3*i+0] > max_s.x) max_s.x = pData->resultJoint[3*i+0];
-            if (pData->resultJoint[3*i+1] < min_s.y) min_s.y = pData->resultJoint[3*i+1];
-            if (pData->resultJoint[3*i+1] > max_s.y) max_s.y = pData->resultJoint[3*i+1];
-            if (pData->resultJoint[3*i+2] < min_s.z) min_s.z = pData->resultJoint[3*i+2];
-            if (pData->resultJoint[3*i+2] > max_s.z) max_s.z = pData->resultJoint[3*i+2];
-        }
-        const GLfloat centerx = (min_s.x + max_s.x) / 2;
-        const GLfloat centery = (min_s.y + max_s.y) / 2;
-        const GLfloat centerz = (min_s.z + max_s.z) / 2;
-        glTranslated(-centerx, -centery, -centerz);
+        glDrawArrays(GL_TRIANGLES, 0, 3); // 3 indices starting at 0 -> 1 triangle
+        glDisableVertexAttribArray(0);
+        glFinish();
     }
+//    glMatrixMode(GL_MODELVIEW);
+//    glLoadIdentity();
+//    glPushMatrix();
+//    if (options.CameraMode == 0u)
+//    {
+//        gluLookAt(0, -options.view_dist * sin(0.0), -options.view_dist * cos(0.0), 0, 0, 0, 0, -1, 0);
+//        glRotatef(options.xrot, 1.0, 0.0, 0.0);
+//        glRotatef(options.yrot, 0.0, 1.0, 0.0);
+//    }
+//    else if (options.CameraMode == 2u)
+//    {
+//        glRotatef(options.xrot, 1.0, 0.0, 0.0);
+//        glRotatef(options.yrot, 0.0, 1.0, 0.0);
+//        const float centerx = 1920 * options.ortho_scale / 2;
+//        const float centery = 1080 * options.ortho_scale / 2;
+//        gluLookAt(centerx, centery, 0, centerx, centery, 1, 0, -1, 0);
+//    }
+//    else
+//    {
+//        assert(options.CameraMode == 1u);
+//        glTranslatef(0, 0, options.view_dist);
+//        glRotatef(options.xrot, 1.0, 0.0, 0.0);
+//        glRotatef(options.yrot, 0.0, 1.0, 0.0);
+//        glTranslatef(0, 0, -options.view_dist);
+//    }
+
+//    if (options.CameraMode == 0u)
+//    {
+//        cv::Point3d min_s(10000., 10000., 10000.);
+//        cv::Point3d max_s(-10000., -10000., -10000.);
+//        assert(pData->resultJoint);
+//        int start_idx, end_idx;
+//        if (pData->vis_type <= 2)
+//        {
+//            start_idx = 0;
+//            if (pData->vis_type == 0)  // for hand
+//                end_idx = 21;
+//            else if(pData->vis_type == 1)  // for body (SMC order)
+//                end_idx = 21;
+//            else if (pData->vis_type == 2) // for hand and body
+//                end_idx = 62;
+//        }
+//        else if(pData->vis_type == 3)
+//        {
+//            start_idx = 21;
+//            end_idx = 21 + 21;
+//        }
+//        else if (pData->vis_type == 4)
+//        {
+//            start_idx = 21 + 21;
+//            end_idx = 21 + 21 + 21;
+//        }
+//        else
+//        {
+//            assert(pData->vis_type == 5);
+//            start_idx = 15;
+//            end_idx = 19;
+//        }
+//        for (int i = start_idx; i < end_idx; i++)
+//        {
+//            if (pData->resultJoint[3*i+0] < min_s.x) min_s.x = pData->resultJoint[3*i+0];
+//            if (pData->resultJoint[3*i+0] > max_s.x) max_s.x = pData->resultJoint[3*i+0];
+//            if (pData->resultJoint[3*i+1] < min_s.y) min_s.y = pData->resultJoint[3*i+1];
+//            if (pData->resultJoint[3*i+1] > max_s.y) max_s.y = pData->resultJoint[3*i+1];
+//            if (pData->resultJoint[3*i+2] < min_s.z) min_s.z = pData->resultJoint[3*i+2];
+//            if (pData->resultJoint[3*i+2] > max_s.z) max_s.z = pData->resultJoint[3*i+2];
+//        }
+//        const GLfloat centerx = (min_s.x + max_s.x) / 2;
+//        const GLfloat centery = (min_s.y + max_s.y) / 2;
+//        const GLfloat centerz = (min_s.z + max_s.z) / 2;
+//        glTranslated(-centerx, -centery, -centerz);
+//    }
 
     if (pData->bShowBackgroundTexture)
     {
@@ -721,7 +800,9 @@ void Renderer::MeshRender()
         glEnable(GL_LIGHTING);
     }
 
-    if (options.show_mesh)
+
+
+    if (0)//(options.show_mesh)
     {
         glEnable(GL_TEXTURE_2D);
         // MVP
@@ -826,8 +907,8 @@ void Renderer::MeshRender()
         glDisable(GL_TEXTURE_2D);
     }
 
-    glUseProgram(0);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+//    glUseProgram(0);
+//    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     //Draw the target joint
     if (options.show_joint && pData->targetJoint != NULL)
@@ -874,8 +955,13 @@ void Renderer::MeshRender()
         glEnable(GL_LIGHTING);
     }
 
-    glPopMatrix();
-    glutSwapBuffers();
+//    glPopMatrix();
+//    glutSwapBuffers();
+//    glFinish();
+
+
+
+
 }
 
 void Renderer::DrawSkeleton(double* joint, uint vis_type, std::vector<int> connMat)
@@ -924,7 +1010,7 @@ void Renderer::DrawSkeleton(double* joint, uint vis_type, std::vector<int> connM
             else rad = 1.0f;
             glPushMatrix();
             glTranslated(joint[3*i], joint[3*i+1], joint[3*i+2]);
-            glutSolidSphere(rad, 100, 100);
+//            glutSolidSphere(rad, 100, 100);
             glPopMatrix();
         }
 
@@ -943,7 +1029,7 @@ void Renderer::DrawSkeleton(double* joint, uint vis_type, std::vector<int> connM
             glTranslatef(x0, y0, z0);
             glRotatef(phi, 0, 0, 1);
             glRotatef(theta, 0, 1, 0);
-            glutSolidCone(cone_rad, length, 100, 100);
+//            glutSolidCone(cone_rad, length, 100, 100);
             glPopMatrix();
         }
     }
@@ -953,7 +1039,7 @@ void Renderer::DrawSkeleton(double* joint, uint vis_type, std::vector<int> connM
         {
             glPushMatrix();
             glTranslated(joint[3*i], joint[3*i+1], joint[3*i+2]);
-            glutSolidSphere(rad, 100, 100);
+//            glutSolidSphere(rad, 100, 100);
             glPopMatrix();
         }
 
@@ -970,7 +1056,7 @@ void Renderer::DrawSkeleton(double* joint, uint vis_type, std::vector<int> connM
             glTranslatef(x0, y0, z0);
             glRotatef(phi, 0, 0, 1);
             glRotatef(theta, 0, 1, 0);
-            glutSolidCone(cone_rad, length, 100, 100);
+//            glutSolidCone(cone_rad, length, 100, 100);
             glPopMatrix();
         }
     }
@@ -991,6 +1077,11 @@ void Renderer::RenderAndRead()
     //glutMainLoopEvent(); 
     // - tj : useless in windowless mode, instead we refresh manually by calling MeshRender() directly.
     MeshRender(); // tj : trigger manually    
+
+    for(int i = 0; i < 10000 ; ++i)
+        std::cout << (int)buffer[i] << " ";
+    std::cout << std::endl;
+
 
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -1070,14 +1161,14 @@ void Renderer::NormalMode(uint position, int width, int height)
         exit(1);
     }
     options.width = width; options.height = height;
-    glutReshapeWindow(width, height);
+//    glutReshapeWindow(width, height);
     options.CameraMode = 0u;
 }
 
 void Renderer::OrthoMode(float scale, uint position)
 {
     options.width = 1920; options.height = 1080;
-    glutReshapeWindow(options.width, options.height);
+//    glutReshapeWindow(options.width, options.height);
     options.ortho_scale = scale;
     options.CameraMode = 2u;
     if (position == 0)
@@ -1103,7 +1194,7 @@ void Renderer::OrthoMode(float scale, uint position)
 void Renderer::RenderDepthMap(VisualizedData& g_visData)
 {
     pData = &g_visData;
-    glutDisplayFunc(DepthMapRenderer);
+//    glutDisplayFunc(DepthMapRenderer);
 }
 
 void Renderer::DepthMapRenderer()
@@ -1167,12 +1258,12 @@ void Renderer::DepthMapRenderer()
         );
     }
     else glDrawArrays(GL_POINTS, 0, pData->m_meshVertices.size());   //Non indexing version
-    glutSwapBuffers();
+//    glutSwapBuffers();
 }
 
 void Renderer::RenderAndReadDepthMap()
 {
-    glutMainLoopEvent();
+//    glutMainLoopEvent();
     if (GL_FRAMEBUFFER_COMPLETE != glCheckFramebufferStatus(GL_FRAMEBUFFER))
     {
         std::cout << "FrameBuffer Fails." << std::endl;
@@ -1185,7 +1276,7 @@ void Renderer::RenderAndReadDepthMap()
     const double nearFar_numerator = - options.zmax * options.zmin / nearFar_interval;
     for (int i = 0; i < 1920 * 1080; i++) pData->read_depth_buffer[i] = nearFar_numerator / (pData->read_depth_buffer[i] - options.zmax / nearFar_interval);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glutPostRedisplay();
+//    glutPostRedisplay();
     g_drawMode = MODE_DRAW_DEFUALT;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glUseProgram(0);
@@ -1194,7 +1285,7 @@ void Renderer::RenderAndReadDepthMap()
 void Renderer::RenderProjection(VisualizedData& g_visData)
 {
     pData = &g_visData;
-    glutDisplayFunc(ProjectionRenderer);
+//    glutDisplayFunc(ProjectionRenderer);
 }
 
 void Renderer::ProjectionRenderer()
@@ -1282,12 +1373,12 @@ void Renderer::ProjectionRenderer()
     else glDrawArrays(GL_POINTS, 0, pData->m_meshVertices.size());   //Non indexing version
     glEnable(GL_LIGHTING);
     glFlush();
-    glutSwapBuffers();
+//    glutSwapBuffers();
 }
 
 void Renderer::RenderAndReadProjection()
 {
-    glutMainLoopEvent();
+//    glutMainLoopEvent();
     if (GL_FRAMEBUFFER_COMPLETE != glCheckFramebufferStatus(GL_FRAMEBUFFER))
     {
         std::cout << "FrameBuffer Fails." << std::endl;
@@ -1296,7 +1387,7 @@ void Renderer::RenderAndReadProjection()
     glPixelStorei(GL_PACK_ALIGNMENT, 1);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glReadPixels(0, 0, 1920, 1080, GL_RGB, GL_FLOAT, pData->read_rgbfloat_buffer);
-    glutPostRedisplay();
+//    glutPostRedisplay();
     g_drawMode = MODE_DRAW_DEFUALT;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glUseProgram(0);

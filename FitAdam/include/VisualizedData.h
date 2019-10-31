@@ -4,8 +4,8 @@
 #include <opencv2/opencv.hpp>
 #include <vector>
 #include <utility>
-#include <GL/glut.h>
-
+//#include <GL/glut.h>
+#include <GL/osmesa.h>
 enum EnumRenderType
 {
 	RENDER_None=-1,
@@ -228,7 +228,7 @@ public:
 struct VisualizationOptions
 {
 	VisualizationOptions(): K(NULL), xrot(0.0f), yrot(0.0f), view_dist(300.0f), nRange(40.0f), CameraMode(0u), show_joint(true), show_mesh(true),
-		ortho_scale(1.0f), width(600), height(600), zmin(0.01f), zmax(1000.0f), meshSolid(false) {}
+        ortho_scale(1.0f), width(600), height(600), zmin(0.01f), zmax(1000.0f), meshSolid(false) {}
 	double* K;
 	GLfloat	xrot, yrot;
 	GLfloat view_dist, nRange;
