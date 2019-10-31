@@ -112,13 +112,13 @@ Renderer::Renderer(int* argc, char** argv)
 
 void Renderer::InitGraphics()
 {
-    std::cout << gluErrorString(glGetError()) << std::endl;
+//
     glEnable(GL_DEPTH_TEST);
-    std::cout << gluErrorString(glGetError()) << std::endl;
+//
     glEnable(GL_BLEND);
-    std::cout << gluErrorString(glGetError()) << std::endl;
+//
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    std::cout << gluErrorString(glGetError()) << std::endl;
+//
 
 
 
@@ -364,7 +364,7 @@ void Renderer::simpleInit()
 void Renderer::reshape(int w, int h)
 {
     if(h == 0) h = 1;
-    std::cout << gluErrorString(glGetError()) << std::endl;
+
     glViewport(0, 0, w, h);
 
 
@@ -410,7 +410,7 @@ void Renderer::reshape(int w, int h)
         assert(options.CameraMode == 2u);
         glOrtho(-w * options.ortho_scale/2, w * options.ortho_scale/2, -h * options.ortho_scale/2, h * options.ortho_scale/2, -options.view_dist, options.view_dist);
     }
-    std::cout << gluErrorString(glGetError()) << std::endl;
+
 }
 
 void Renderer::RenderHand(VisualizedData& g_visData)
@@ -651,7 +651,7 @@ void Renderer::SpecialKeys(const int key, const int x, const int y)
 void Renderer::MeshRender()
 {
 
-    std::cout << gluErrorString(glGetError()) << std::endl;
+//
 
     if (use_color_fbo)
     {
@@ -834,29 +834,29 @@ void Renderer::MeshRender()
 
     if (options.show_mesh)
     {
-        std::cout << gluErrorString(glGetError()) << std::endl;
+//
 //        glEnable(GL_TEXTURE_2D);
         // MVP
         glm::mat4 mvMat,pMat,mvpMat;
-        std::cout << gluErrorString(glGetError()) << std::endl;
+//
         mvMat = m_camera.getViewMatrix();
         pMat = m_camera.getProjectionMatrix();
-        std::cout << gluErrorString(glGetError()) << std::endl;
+//
 //        glGetFloatv(GL_MODELVIEW_MATRIX, &mvMat[0][0]);
 //        glGetFloatv(GL_PROJECTION_MATRIX, &pMat[0][0]);
         mvpMat = pMat * mvMat;
 
-        std::cout << gluErrorString(glGetError()) << std::endl;
+
         glUseProgram(g_shaderProgramID[MODE_DRAW_MESH]);
-        std::cout << gluErrorString(glGetError()) << std::endl;
+
         GLuint MVP_id = glGetUniformLocation(g_shaderProgramID[MODE_DRAW_MESH], "MVP");
-        std::cout << gluErrorString(glGetError()) << std::endl;
+
         glUniformMatrix4fv(MVP_id, 1, GL_FALSE, &mvpMat[0][0]);
-        std::cout << gluErrorString(glGetError()) << std::endl;
+
 
         GLuint MV_id = glGetUniformLocation(g_shaderProgramID[MODE_DRAW_MESH], "MV");
         glUniformMatrix4fv(MV_id, 1, GL_FALSE, &mvMat[0][0]);
-        std::cout << gluErrorString(glGetError()) << std::endl;
+
         // mesh part
         glUseProgram(g_shaderProgramID[MODE_DRAW_MESH]);
         glLineWidth((GLfloat)0.5);
@@ -1144,9 +1144,9 @@ void Renderer::CameraMode(uint position, int width, int height, double* calibK)
 
     options.CameraMode = 1u;
 
-    std::cout << gluErrorString(glGetError()) << std::endl;
+
     reshape(width, height);// tj : trigger directly
-    std::cout << gluErrorString(glGetError()) << std::endl;
+
 
     if (position == 0)
     {
