@@ -193,8 +193,10 @@ data['rPAF'] = data['rPAF'] * tf.constant([-1, 1, 1] * (60 // 3), dtype=tf.float
 gpu_options = tf.GPUOptions(per_process_gpu_memory_fraction=0.35)
 sess = tf.Session(config=tf.ConfigProto(gpu_options=gpu_options))
 sess.run(tf.global_variables_initializer())
-# tj : visualize in Tensorboard
-summary_writer = tf.summary.FileWriter('./log/', sess.graph)
+
+# tj +: visualize in Tensorboard
+# summary_writer = tf.summary.FileWriter('./log/', sess.graph)
+
 tf.train.start_queue_runners(sess=sess)
 
 cpt = './snapshots/Final_qual_domeCOCO_chest_noPAF2D/model-390000'
