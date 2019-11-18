@@ -222,7 +222,7 @@ int main(int argc, char* argv[])
             std::cout << "Fitting image " << image_index << " ----------------" << std::endl;
 
             char basename[200];
-            sprintf(basename, "%08.txt", image_index);
+            sprintf(basename, "%08d.txt", image_index);
             const std::string param_filename = FLAGS_root_dirs + "/" + FLAGS_seqName + "/body_3d_frontal/" + basename;
 
             smpl::SMPLParams frame_params;
