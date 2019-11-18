@@ -222,7 +222,7 @@ int main(int argc, char* argv[])
             std::cout << "Fitting image " << image_index << " ----------------" << std::endl;
 
             char basename[200];
-            sprintf(basename, "%04d.txt", image_index);
+            sprintf(basename, "%08.txt", image_index);
             const std::string param_filename = FLAGS_root_dirs + "/" + FLAGS_seqName + "/body_3d_frontal/" + basename;
 
             smpl::SMPLParams frame_params;
@@ -318,7 +318,7 @@ int main(int argc, char* argv[])
             imgr.copyTo(img.rowRange(0, imgr.rows).colRange(0, imgr.cols));
             cv::Mat aligned = alignMeshImageAlpha(frame, img);
             // cv::Mat aligned = alignMeshImage(frame, cv::imread(imgName));
-            sprintf(basename, "%04d.png", image_index);
+            sprintf(basename, "%08d.png", image_index);
             const std::string filename = FLAGS_root_dirs + "/" + FLAGS_seqName + "/body_3d_frontal/" + basename;
             assert(cv::imwrite(filename, aligned));
 
@@ -362,7 +362,7 @@ int main(int argc, char* argv[])
         {
             std::cout << "Reading single frame results: " << image_index << std::endl;
             char basename[200];
-            sprintf(basename, "%04d.txt", image_index);
+            sprintf(basename, "%08d.txt", image_index);
             const std::string param_filename = FLAGS_root_dirs + "/" + FLAGS_seqName + "/body_3d_frontal/" + basename;
             smpl::SMPLParams frame_params;
             readFrameParam(param_filename, frame_params);
@@ -622,11 +622,11 @@ int main(int argc, char* argv[])
             img2cr.copyTo(img2c.rowRange(0, img2cr.rows).colRange(0, img2cr.cols));
             cv::Mat aligned = alignMeshImageAlpha(resultMeshImage, img2c);
 
-            sprintf(basename, "%04d.png", image_index + 1);
+            sprintf(basename, "%08d.png", image_index + 1);
             const std::string filename = FLAGS_root_dirs + "/" + FLAGS_seqName + "/body_3d_frontal_tracking/" + basename;
             assert(cv::imwrite(filename, aligned));
 
-            sprintf(basename, "%04d.txt", image_index + 1);
+            sprintf(basename, "%08d.txt", image_index + 1);
             const std::string param_filename = FLAGS_root_dirs + "/" + FLAGS_seqName + "/body_3d_frontal_tracking/" + basename;
             writeFrameParam(param_filename, batch_refit_params[i + 1]);
 
@@ -652,11 +652,11 @@ int main(int argc, char* argv[])
                 img1cr.copyTo(img1c.rowRange(0, img1cr.rows).colRange(0, img1cr.cols));
                 cv::Mat aligned = alignMeshImageAlpha(resultMeshImage, img1c);
 
-                sprintf(basename, "%04d.png", image_index);
+                sprintf(basename, "%08d.png", image_index);
                 const std::string filename = FLAGS_root_dirs + "/" + FLAGS_seqName + "/body_3d_frontal_tracking/" + basename;
                 assert(cv::imwrite(filename, aligned));
 
-                sprintf(basename, "%04d.txt", image_index);
+                sprintf(basename, "%08d.txt", image_index);
                 const std::string param_filename = FLAGS_root_dirs + "/" + FLAGS_seqName + "/body_3d_frontal_tracking/" + basename;
                 writeFrameParam(param_filename, batch_refit_params[i]);
             }
