@@ -187,26 +187,25 @@ void Renderer::InitGraphics()
 //    }
 
 //    //Create depth frame buffer (used to depth rendering)
-//    glGenFramebuffers(1, &g_fbo_depth);
-//    glBindFramebuffer(GL_FRAMEBUFFER, g_fbo_depth);
-//    glGenTextures(1, &g_depthTexture);
-//    glBindTexture(GL_TEXTURE_2D, g_depthTexture);
-//    // glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT32, 640, 480, 0,GL_DEPTH_COMPONENT, GL_DOUBLE, 0);
-//    // glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT32, 1920, 1080, 0, GL_DEPTH_COMPONENT, GL_DOUBLE, 0);        //1920, 1080 is the maximum
-//    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, 1920, 1080, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
-//    // We're going to read from this, but it won't have mipmaps,
-//    // so turn off mipmaps for this texture.
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//    glFramebufferTexture(GL_FRAMEBUFFER,
-//                         GL_DEPTH_ATTACHMENT,
-//                         g_depthTexture, 0);
-//    if(GL_FRAMEBUFFER_COMPLETE != glCheckFramebufferStatus(GL_FRAMEBUFFER))
-//    {
-//        printf("Failed in depth framebuffer setting\n");
-//        return;
-//    }
-
+    glGenFramebuffers(1, &g_fbo_depth);
+    glBindFramebuffer(GL_FRAMEBUFFER, g_fbo_depth);
+    glGenTextures(1, &g_depthTexture);
+    glBindTexture(GL_TEXTURE_2D, g_depthTexture);
+    // glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT32, 640, 480, 0,GL_DEPTH_COMPONENT, GL_DOUBLE, 0);
+    // glTexImage2D(GL_TEXTURE_2D, 0,GL_DEPTH_COMPONENT32, 1920, 1080, 0, GL_DEPTH_COMPONENT, GL_DOUBLE, 0);        //1920, 1080 is the maximum
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT32, 1920, 1080, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+    // We're going to read from this, but it won't have mipmaps,
+    // so turn off mipmaps for this texture.
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glFramebufferTexture(GL_FRAMEBUFFER,
+                         GL_DEPTH_ATTACHMENT,
+                         g_depthTexture, 0);
+    if(GL_FRAMEBUFFER_COMPLETE != glCheckFramebufferStatus(GL_FRAMEBUFFER))
+    {
+        printf("Failed in depth framebuffer setting\n");
+        return;
+    }
 //    //Create rgb float frame buffer
 //    glGenFramebuffers(1, &g_fbo_rgbfloat);
 //    glBindFramebuffer(GL_FRAMEBUFFER, g_fbo_rgbfloat);
@@ -670,7 +669,7 @@ void Renderer::MeshRender()
     }
     else
     {
-//        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
         glViewport(0, 0, options.width, options.height);
     }
 
