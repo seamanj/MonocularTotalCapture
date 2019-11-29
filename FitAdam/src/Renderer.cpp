@@ -1122,13 +1122,13 @@ void Renderer::RenderAndRead()
 //        std::cout << (int)buffer[i] << " ";
 //    std::cout << std::endl;
 
-    memcpy(pData->read_buffer, buffer, 4 * options.width * options.height);
+//    memcpy(pData->read_buffer, buffer, 4 * options.width * options.height);
 
-//    glPixelStorei(GL_PACK_ALIGNMENT, 1);
-//    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-//    // glReadPixels(0, 0, options.width, options.height, GL_RGB, GL_UNSIGNED_BYTE, pData->read_buffer);
-//    glReadPixels(0, 0, options.width, options.height, GL_RGBA, GL_UNSIGNED_BYTE, pData->read_buffer);
-//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    // glReadPixels(0, 0, options.width, options.height, GL_RGB, GL_UNSIGNED_BYTE, pData->read_buffer);
+    glReadPixels(0, 0, options.width, options.height, GL_RGBA, GL_UNSIGNED_BYTE, pData->read_buffer);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     //glutPostRedisplay();
     // - tj : useless in windowless model
     g_drawMode = MODE_DRAW_DEFUALT;
