@@ -25,7 +25,7 @@
 
 #include "glewfun.hpp"
 
-const std::string Renderer::SHADER_ROOT = "./Shaders/";//"/home/seamanj/Workspace/MonocularTotalCapture/FitAdam/Shaders";
+const std::string Renderer::SHADER_ROOT = "/home/seamanj/Workspace/MonocularTotalCapture/FitAdam/Shaders";//home/seamanj/Workspace/MonocularTotalCapture/FitAdam/Shaders";
 GLuint Renderer::g_shaderProgramID[9];
 
 int Renderer::g_drawMode = 0;
