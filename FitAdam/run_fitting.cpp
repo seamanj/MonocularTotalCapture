@@ -130,7 +130,8 @@ int main(int argc, char* argv[])
     {
         char basename[20];
         sprintf(basename, "%012d.txt", i);
-        const std::string filename = FLAGS_root_dirs + "/" + FLAGS_seqName + "/net_output/" + basename;
+//        const std::string filename = FLAGS_root_dirs + "/" + FLAGS_seqName + "/net_output/" + basename;
+        const std::string filename = FLAGS_output_dirs + "/net_output/" + basename;
         std::ifstream f2(filename.c_str());
         // check the file exists
         if (!f2.good())
