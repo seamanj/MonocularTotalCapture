@@ -1122,6 +1122,7 @@ void Renderer::RenderAndRead()
 //        std::cout << (int)buffer[i] << " ";
 //    std::cout << std::endl;
 
+    memcpy(pData->read_buffer, buffer, 4 * options.width * options.height);
 
 //    glPixelStorei(GL_PACK_ALIGNMENT, 1);
 //    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);

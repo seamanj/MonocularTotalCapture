@@ -305,8 +305,8 @@ int main(int argc, char* argv[])
             render->RenderAndRead();
 
             // convert to opencv format
-            //cv::Mat frame(ROWS, COLS, CV_8UC4, ret_bytes);
-            cv::Mat frame(ROWS, COLS, CV_8UC4, render->buffer);
+            cv::Mat frame(ROWS, COLS, CV_8UC4, ret_bytes);
+//            cv::Mat frame(ROWS, COLS, CV_8UC4, render->buffer);
             cv::flip(frame, frame, 0);
             cv::cvtColor(frame, frame, cv::COLOR_RGBA2BGRA);  // convert to BGR
 
