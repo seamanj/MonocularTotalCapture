@@ -28,6 +28,7 @@
 #define FACE_VERIFY_THRESH 0.05
 #define PI 3.14159265359
 DEFINE_string(root_dirs, "", "Base root folder to access data");
+DEFINE_string(output_dirs, "", "Output Dir");
 DEFINE_string(seqName, "default", "Sequence Name to run");
 DEFINE_int32(start, 1, "Starting frame");
 DEFINE_int32(end, 1000, "Ending frame");
@@ -56,6 +57,7 @@ void check_flags(int argc, char* argv[])
 #endif
     std::cout << "Root Directory: " << FLAGS_root_dirs << std::endl;
     std::cout << "Sequence Name: " << FLAGS_seqName << std::endl;
+    std::cout << "Output Dir: " << FLAGS_output_dirs << std::endl;
     if (FLAGS_seqName.compare("default") == 0)
     {
         std::cerr << "Error: Sequence Name must be set." << std::endl;
@@ -107,7 +109,8 @@ int main(int argc, char* argv[])
     Stage 0: read in data
     */
     double calibK[9];  // K Matrix
-    const std::string calib_filename = FLAGS_root_dirs + "/" + FLAGS_seqName + "/calib.json";
+//    const std::string calib_filename = FLAGS_root_dirs + "/" + FLAGS_seqName + "/calib.json";
+    const std::string calib_filename = FLAGS_output_dirs + "/calib.json";
     Json::Value json_root;
     std::ifstream f(calib_filename.c_str());
     if (!f.good())
@@ -209,7 +212,9 @@ int main(int argc, char* argv[])
 //
     if (FLAGS_stage == 1)
     {
-        boost::filesystem::create_directories(FLAGS_root_dirs + "/" + FLAGS_seqName + "/body_3d_frontal/");
+//        boost::filesystem::create_directories(FLAGS_root_dirs + "/" + FLAGS_seqName + "/body_3d_frontal/");
+        boost::filesystem::create_directories(FLAGS_output_dirs + "/body_3d_frontal/");
+
 
         ModelFitter model_fitter(g_total_model);
         model_fitter.setCalibK(calibK);
@@ -223,8 +228,8 @@ int main(int argc, char* argv[])
 
             char basename[200];
             sprintf(basename, "%08d.txt", image_index);
-            const std::string param_filename = FLAGS_root_dirs + "/" + FLAGS_seqName + "/body_3d_frontal/" + basename;
-
+//            const std::string param_filename = FLAGS_root_dirs + "/" + FLAGS_seqName + "/body_3d_frontal/" + basename;
+            const std::string param_filename = FLAGS_output_dirs + "/body_3d_frontal/" + basename;
             smpl::SMPLParams frame_params;
             frame_params.m_adam_t.setZero();
             frame_params.m_adam_t(2) = 500;
@@ -311,7 +316,8 @@ int main(int argc, char* argv[])
             cv::cvtColor(frame, frame, cv::COLOR_RGBA2BGRA);  // convert to BGR
 
             sprintf(basename, "%s_%08d.png", FLAGS_seqName.c_str(), image_index);
-            const std::string imgName = FLAGS_root_dirs + "/" + FLAGS_seqName + "/raw_image/" + basename;
+//            const std::string imgName = FLAGS_root_dirs + "/" + FLAGS_seqName + "/raw_image/" + basename;
+            const std::string imgName = FLAGS_output_dirs + "/raw_image/" + basename;
             std::cout << imgName << std::endl;
             cv::Mat img(ROWS, COLS, CV_8UC3, cv::Scalar(0));
             cv::Mat imgr = cv::imread(imgName);
@@ -319,7 +325,8 @@ int main(int argc, char* argv[])
             cv::Mat aligned = alignMeshImageAlpha(frame, img);
             // cv::Mat aligned = alignMeshImage(frame, cv::imread(imgName));
             sprintf(basename, "%08d.png", image_index);
-            const std::string filename = FLAGS_root_dirs + "/" + FLAGS_seqName + "/body_3d_frontal/" + basename;
+//            const std::string filename = FLAGS_root_dirs + "/" + FLAGS_seqName + "/body_3d_frontal/" + basename;
+            const std::string filename = FLAGS_output_dirs + "/body_3d_frontal/" + basename;
             assert(cv::imwrite(filename, aligned));
 
             writeFrameParam(param_filename, refit_params);
