@@ -1251,8 +1251,8 @@ void Renderer::DepthMapRenderer()
     GLuint MVP_id = glGetUniformLocation(g_shaderProgramID[g_drawMode], "MVP");
     // Get the current MVP matrix
     glm::mat4 mvMat,pMat,mvpMat;
-    glGetFloatv(GL_MODELVIEW_MATRIX, &mvMat[0][0]);
-    glGetFloatv(GL_PROJECTION_MATRIX, &pMat[0][0]);
+    mvMat = m_camera.getViewMatrix();
+    pMat = m_camera.getProjectionMatrix();
     mvpMat = pMat * mvMat;
     glUniformMatrix4fv(MVP_id, 1, GL_FALSE, &mvpMat[0][0]);
 
@@ -1309,23 +1309,26 @@ void Renderer::DepthMapRenderer()
 
 void Renderer::RenderAndReadDepthMap()
 {
-////    glutMainLoopEvent();
-//    if (GL_FRAMEBUFFER_COMPLETE != glCheckFramebufferStatus(GL_FRAMEBUFFER))
-//    {
-//        std::cout << "FrameBuffer Fails." << std::endl;
-//        exit(0);
-//    }
-//    glPixelStorei(GL_PACK_ALIGNMENT, 1);
-//    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-//    glReadPixels(0, 0, 1920, 1080, GL_DEPTH_COMPONENT, GL_FLOAT, pData->read_depth_buffer);
-//    const double nearFar_interval = options.zmax - options.zmin;
-//    const double nearFar_numerator = - options.zmax * options.zmin / nearFar_interval;
-//    for (int i = 0; i < 1920 * 1080; i++) pData->read_depth_buffer[i] = nearFar_numerator / (pData->read_depth_buffer[i] - options.zmax / nearFar_interval);
-//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-////    glutPostRedisplay();
-//    g_drawMode = MODE_DRAW_DEFUALT;
-//    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-//    glUseProgram(0);
+//    glutMainLoopEvent();
+    if (GL_FRAMEBUFFER_COMPLETE != glCheckFramebufferStatus(GL_FRAMEBUFFER))
+    {
+        std::cout << "FrameBuffer Fails." << std::endl;
+        exit(0);
+    }
+
+    DepthMapRenderer();
+
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glReadPixels(0, 0, 1920, 1080, GL_DEPTH_COMPONENT, GL_FLOAT, pData->read_depth_buffer);
+    const double nearFar_interval = options.zmax - options.zmin;
+    const double nearFar_numerator = - options.zmax * options.zmin / nearFar_interval;
+    for (int i = 0; i < 1920 * 1080; i++) pData->read_depth_buffer[i] = nearFar_numerator / (pData->read_depth_buffer[i] - options.zmax / nearFar_interval);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//    glutPostRedisplay();
+    g_drawMode = MODE_DRAW_DEFUALT;
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glUseProgram(0);
 }
 
 void Renderer::RenderProjection(VisualizedData& g_visData)
