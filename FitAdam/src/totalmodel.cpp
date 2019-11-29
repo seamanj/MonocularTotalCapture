@@ -381,15 +381,17 @@ void adam_reconstruct_Eulers(const TotalModel& totalm,
 		(TotalModel::NUM_JOINTS) * 3,
 		(TotalModel::NUM_JOINTS) * 3> p2t(new PoseToTransformsNoLR_Eulers_adamModel(totalm, euler));
 	const double * parameters[2] = { parm_pose_eulers, J.data() };
+    // = tj : given the pose and joints params, calculate the transformation of joints
 	double * residuals = transforms_joint.data();
 	p2t.Evaluate(parameters, residuals, nullptr);		//automatically compute residuals and jacobians (dTdP and dTdJ)
-
+    // = tj : save the transforms in transforms_joint
 	transforms.block(0, 0, num_t, 1) = transforms_joint.block(0, 0, num_t, 1);
 
 	Map< const Matrix<double, Dynamic, 1> > c_faceEx(parm_faceEx_coeffs, TotalModel::NUM_EXP_BASIS_COEFFICIENTS);
 	Vt_vec = Vt_vec + totalm.m_dVdFaceEx * c_faceEx;		// m_C_face2total*facem.U_exp_
 	
 	adam_lbs(totalm, Vt_vec.data(), transforms, outVerts);
+    // = tj : reconstruct the mesh from the transforms and save results into outVerts
 }
 
 void adam_lbs(const TotalModel &totalm,

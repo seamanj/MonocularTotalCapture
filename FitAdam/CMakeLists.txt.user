@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.9.2, 2019-11-18T18:02:51. -->
+<!-- Written by QtCreator 4.9.2, 2019-11-29T16:55:39. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -362,7 +362,7 @@
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">run_fitting</value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">CMakeProjectManager.CMakeRunConfiguration.run_fitting
 /home/seamanj/Workspace/MonocularTotalCapture/FitAdam/</value>
-    <value type="QString" key="RunConfiguration.Arguments">--root_dirs /home/seamanj/Workspace/MonocularTotalCapture/data --seqName example_speech --start 1 --end 10 --stage 1 --imageOF</value>
+    <value type="QString" key="RunConfiguration.Arguments">--root_dirs /home/seamanj/Workspace/MonocularTotalCapture/data --seqName example_speech --start 1 --end 10 --stage 2 --imageOF</value>
     <value type="uint" key="RunConfiguration.QmlDebugServerPort">3768</value>
     <value type="bool" key="RunConfiguration.UseCppDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseCppDebuggerAuto">true</value>
