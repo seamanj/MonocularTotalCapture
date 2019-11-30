@@ -163,29 +163,41 @@ void Renderer::InitGraphics()
 //    glGenBuffers(1, &g_normalBuffer);
     glGenBuffers(1, &g_indexBuffer);            //Mesh face's indices
 
-//    //The following is for off-screen rendering
-//    //Create color frame buffer (used to picking)
+    //The following is for off-screen rendering
+    //Create color frame buffer (used to picking)
+//    std::cout << "tj0002 : " << gluErrorString(glGetError()) << std::endl;
 //    glEnable(GL_TEXTURE_2D);
-//    glGenFramebuffers(1, &g_fbo_color);
-//    glBindFramebuffer(GL_FRAMEBUFFER, g_fbo_color);
-//    glGenTextures(1, &g_colorTexture);
-//    glBindTexture(GL_TEXTURE_2D, g_colorTexture);
-//    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, g_colorTextureBufferWidth, g_colorTextureBufferHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);        //1920, 1080 is the maximum available windows size
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//    glFramebufferTexture(GL_FRAMEBUFFER,
-//                         GL_COLOR_ATTACHMENT0,
-//                         g_colorTexture, 0);
-//    glGenRenderbuffers(1, &g_depth_renderbuffer);   // a depth buffer is needed for FBO rendering
-//    glBindRenderbuffer(GL_RENDERBUFFER, g_depth_renderbuffer);
-//    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 1920, 1080);
-//    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, g_depth_renderbuffer);
-//    if(GL_FRAMEBUFFER_COMPLETE != glCheckFramebufferStatus(GL_FRAMEBUFFER))
-//    {
-//        printf("Failed in color framebuffer setting\n");
-//        return;
-//    }
+//    std::cout << "tj0003 : " << gluErrorString(glGetError()) << std::endl;
+    glGenFramebuffers(1, &g_fbo_color);
+//    std::cout << "tj0004 : " << gluErrorString(glGetError()) << std::endl;
+    glBindFramebuffer(GL_FRAMEBUFFER, g_fbo_color);
+//    std::cout << "tj0005 : " << gluErrorString(glGetError()) << std::endl;
+    glGenTextures(1, &g_colorTexture);
+//    std::cout << "tj0006 : " << gluErrorString(glGetError()) << std::endl;
+    glBindTexture(GL_TEXTURE_2D, g_colorTexture);
+//    std::cout << "tj0007 : " << gluErrorString(glGetError()) << std::endl;
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, g_colorTextureBufferWidth, g_colorTextureBufferHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, 0);        //1920, 1080 is the maximum available windows size
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+//    std::cout << "tj0004 : " << gluErrorString(glGetError()) << std::endl;
+    glFramebufferTexture(GL_FRAMEBUFFER,
+                         GL_COLOR_ATTACHMENT0,
+                         g_colorTexture, 0);
 
+
+
+    glGenRenderbuffers(1, &g_depth_renderbuffer);   // a depth buffer is needed for FBO rendering
+//    std::cout << "tj0005 : " << gluErrorString(glGetError()) << std::endl;
+    glBindRenderbuffer(GL_RENDERBUFFER, g_depth_renderbuffer);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 1920, 1080);
+//    std::cout << "tj0006 : " << gluErrorString(glGetError()) << std::endl;
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, g_depth_renderbuffer);
+    if(GL_FRAMEBUFFER_COMPLETE != glCheckFramebufferStatus(GL_FRAMEBUFFER))
+    {
+        printf("Failed in color framebuffer setting\n");
+        return;
+    }
+//    std::cout << "tj0002 : " << gluErrorString(glGetError()) << std::endl;
 //    //Create depth frame buffer (used to depth rendering)
     glGenFramebuffers(1, &g_fbo_depth);
     glBindFramebuffer(GL_FRAMEBUFFER, g_fbo_depth);
@@ -206,27 +218,30 @@ void Renderer::InitGraphics()
         printf("Failed in depth framebuffer setting\n");
         return;
     }
-//    //Create rgb float frame buffer
-//    glGenFramebuffers(1, &g_fbo_rgbfloat);
-//    glBindFramebuffer(GL_FRAMEBUFFER, g_fbo_rgbfloat);
-//    glGenTextures(1, &g_rgbfloatTexture);
-//    glBindTexture(GL_TEXTURE_2D, g_rgbfloatTexture);
-//    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, 1920, 1080, 0, GL_RGB, GL_FLOAT, 0);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-//    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-//    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, g_rgbfloatTexture, 0);
-//    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, g_depth_renderbuffer); // also attach the depth renderbuffer to this framebuffer
-//    if(GL_FRAMEBUFFER_COMPLETE != glCheckFramebufferStatus(GL_FRAMEBUFFER))
-//    {
-//        printf("Failed in RGFloat framebuffer setting\n");
-//        exit(0);
-//    }
+    //Create rgb float frame buffer
+    glGenFramebuffers(1, &g_fbo_rgbfloat);
+    glBindFramebuffer(GL_FRAMEBUFFER, g_fbo_rgbfloat);
+    glGenTextures(1, &g_rgbfloatTexture);
+    glBindTexture(GL_TEXTURE_2D, g_rgbfloatTexture);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, 1920, 1080, 0, GL_RGB, GL_FLOAT, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, g_rgbfloatTexture, 0);
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, g_depth_renderbuffer); // also attach the depth renderbuffer to this framebuffer
+    if(GL_FRAMEBUFFER_COMPLETE != glCheckFramebufferStatus(GL_FRAMEBUFFER))
+    {
+        printf("Failed in RGFloat framebuffer setting\n");
+        exit(0);
+    }
 
 //    glGenFramebuffers(1, &g_imageTexture);
     
 //    //Come back to original screen framebuffer
 //    glBindFramebuffer(GL_FRAMEBUFFER,0);
 //    glDisable(GL_TEXTURE_2D);
+
+
+    std::cout << "tj0001 : " << gluErrorString(glGetError()) << std::endl;
 }
 
 
@@ -1112,7 +1127,8 @@ void Renderer::DrawSkeleton(double* joint, uint vis_type, std::vector<int> connM
 
 void Renderer::RenderAndRead()
 {
-    if (use_color_fbo) glBindFramebuffer(GL_FRAMEBUFFER, g_fbo_color);
+    if (use_color_fbo)
+        glBindFramebuffer(GL_FRAMEBUFFER, g_fbo_color);
     //glutMainLoopEvent(); 
     // - tj : useless in windowless mode, instead we refresh manually by calling MeshRender() directly.
     MeshRender(); // tj : trigger manually    
@@ -1271,7 +1287,7 @@ void Renderer::DepthMapRenderer()
         0);        // Offset zero (NULL pointer)
     glEnableVertexAttribArray(vertexPosition_id);
 
-    glEnable(GL_TEXTURE_2D);
+//    glEnable(GL_TEXTURE_2D);
     glBindFramebuffer(GL_FRAMEBUFFER, g_fbo_depth);
     glViewport(0, 0, 1920, 1080);
     GLenum FBOstatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -1304,6 +1320,7 @@ void Renderer::DepthMapRenderer()
     }
     else glDrawArrays(GL_POINTS, 0, pData->m_meshVertices.size());   //Non indexing version
 //    glutSwapBuffers();
+    glFlush(); // tj+
 }
 
 void Renderer::RenderAndReadDepthMap()
@@ -1323,6 +1340,11 @@ void Renderer::RenderAndReadDepthMap()
     const double nearFar_interval = options.zmax - options.zmin;
     const double nearFar_numerator = - options.zmax * options.zmin / nearFar_interval;
     for (int i = 0; i < 1920 * 1080; i++) pData->read_depth_buffer[i] = nearFar_numerator / (pData->read_depth_buffer[i] - options.zmax / nearFar_interval);
+
+    for(int i = 0; i < 1000; ++i)
+        std::cout << pData->read_depth_buffer[i] << " ";
+    std::cout << std::endl;
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 //    glutPostRedisplay();
     g_drawMode = MODE_DRAW_DEFUALT;
@@ -1338,6 +1360,7 @@ void Renderer::RenderProjection(VisualizedData& g_visData)
 
 void Renderer::ProjectionRenderer()
 {
+    std::cout << " tj0002 : " << gluErrorString(glGetError()) << std::endl;
     assert(options.CameraMode == 1u);
     g_drawMode = MODE_DRAW_PROJECTION;
     glUseProgram(g_shaderProgramID[g_drawMode]);
@@ -1345,13 +1368,13 @@ void Renderer::ProjectionRenderer()
     GLuint MVP_id = glGetUniformLocation(g_shaderProgramID[g_drawMode], "MVP");
     // Get the current MVP matrix
     glm::mat4 mvMat,pMat,mvpMat;
-    glGetFloatv(GL_MODELVIEW_MATRIX, &mvMat[0][0]);
-    glGetFloatv(GL_PROJECTION_MATRIX, &pMat[0][0]);
+    mvMat = m_camera.getViewMatrix();
+    pMat = m_camera.getProjectionMatrix();
     mvpMat = pMat * mvMat;
     glUniformMatrix4fv(MVP_id, 1, GL_FALSE, &mvpMat[0][0]);
-
-    glDisable(GL_LIGHTING);
-    glEnable(GL_TEXTURE_2D);
+std::cout << " tj0002 : " << gluErrorString(glGetError()) << std::endl;
+//    glDisable(GL_LIGHTING);
+//    glEnable(GL_TEXTURE_2D);
     glBindFramebuffer(GL_FRAMEBUFFER, g_fbo_rgbfloat);
     glViewport(0, 0, 1920, 1080);
     GLenum FBOstatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
@@ -1360,14 +1383,20 @@ void Renderer::ProjectionRenderer()
         std::cout << "FrameBuffer Fails." << std::endl;
         exit(0);
     }
+    std::cout << " tj0003 : " << gluErrorString(glGetError()) << std::endl;
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+    std::cout << " tj0004 : " << gluErrorString(glGetError()) << std::endl;
     GLfloat white[3] = {-1., -1., -1.};  // test value
+    std::cout << " tj0004 : " << gluErrorString(glGetError()) << std::endl;
     glClearBufferfv(GL_COLOR, 0, white);
+    std::cout << " tj0004 : " << gluErrorString(glGetError()) << std::endl;
     glDrawBuffer(GL_COLOR_ATTACHMENT0);
+    std::cout << " tj0004 : " << gluErrorString(glGetError()) << std::endl;
 
     glBindVertexArray(g_vao);
+    std::cout << " tj0004 : " << gluErrorString(glGetError()) << std::endl;
     glBindBuffer(GL_ARRAY_BUFFER, g_vertexBuffer);
-
+std::cout << " tj0004 : " << gluErrorString(glGetError()) << std::endl;
     glBufferData(GL_ARRAY_BUFFER, sizeof(cv::Point3d) * (pData->m_meshVertices.size()) + sizeof(cv::Point3d) * (pData->m_meshVerticesColor.size()),
         NULL, GL_STATIC_DRAW);  
     int offset = sizeof(cv::Point3d) * (pData->m_meshVertices.size());
@@ -1379,7 +1408,7 @@ void Renderer::ProjectionRenderer()
         memcpy((char*)ptr + sizeof(cv::Point3d) * i + offset, &(pData->m_meshVerticesColor[i]), sizeof(cv::Point3d));   // the 2D projection is suppose to be store in m_meshVerticesUV
     }
     glUnmapBuffer(GL_ARRAY_BUFFER);     // Tell OpenGL that we're done with the pointer
-
+std::cout << " tj0005 : " << gluErrorString(glGetError()) << std::endl;
     GLuint vertexPosition_id = glGetAttribLocation(g_shaderProgramID[MODE_DRAW_PROJECTION], "vertex_pos");
 
     glVertexAttribPointer(vertexPosition_id,            // Attribute 0 or vertexPosition_id
@@ -1401,14 +1430,16 @@ void Renderer::ProjectionRenderer()
         0,            // stride
         (void*)offset);        // Offset in the buffer 
     glEnableVertexAttribArray(vertexColor_id);
-
+    std::cout << " tj0006 : " << gluErrorString(glGetError()) << std::endl;
     //Face indexing
     if (pData->m_meshIndices.size()>0)
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_indexBuffer);       //Note "GL_ELEMENT_ARRAY_BUFFER" instead of GL_ARRAY_BUFFER
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, pData->m_meshIndices.size() * sizeof(unsigned int), &(pData->m_meshIndices[0]), GL_STATIC_DRAW);  //allocate and copy together
     }
-    glPolygonMode(GL_FRONT, GL_FILL);
+    std::cout << " tj0006 : " << gluErrorString(glGetError()) << std::endl;
+//    glPolygonMode(GL_FRONT, GL_FILL);
+    std::cout << " tj0006 : " << gluErrorString(glGetError()) << std::endl;
     if (pData->m_meshIndices.size() > 0)
     {
         glDrawElements(         //Indexed
@@ -1419,24 +1450,32 @@ void Renderer::ProjectionRenderer()
         );
     }
     else glDrawArrays(GL_POINTS, 0, pData->m_meshVertices.size());   //Non indexing version
-    glEnable(GL_LIGHTING);
+    std::cout << " tj0006 : " << gluErrorString(glGetError()) << std::endl;
+//    glEnable(GL_LIGHTING);
     glFlush();
+    std::cout << " tj0001 : " << gluErrorString(glGetError()) << std::endl;
 //    glutSwapBuffers();
 }
 
 void Renderer::RenderAndReadProjection()
 {
 //    glutMainLoopEvent();
-//    if (GL_FRAMEBUFFER_COMPLETE != glCheckFramebufferStatus(GL_FRAMEBUFFER))
-//    {
-//        std::cout << "FrameBuffer Fails." << std::endl;
-//        exit(0);
-//    }
-//    glPixelStorei(GL_PACK_ALIGNMENT, 1);
-//    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-//    glReadPixels(0, 0, 1920, 1080, GL_RGB, GL_FLOAT, pData->read_rgbfloat_buffer);
-////    glutPostRedisplay();
-//    g_drawMode = MODE_DRAW_DEFUALT;
-//    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-//    glUseProgram(0);
+    if (GL_FRAMEBUFFER_COMPLETE != glCheckFramebufferStatus(GL_FRAMEBUFFER))
+    {
+        std::cout << "FrameBuffer Fails." << std::endl;
+        exit(0);
+    }
+    ProjectionRenderer();
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glReadPixels(0, 0, 1920, 1080, GL_RGB, GL_FLOAT, pData->read_rgbfloat_buffer);
+
+    for(int i = 0; i < 1000; ++i)
+        std::cout << pData->read_rgbfloat_buffer[i] << " ";
+    std::cout << std::endl;
+
+//    glutPostRedisplay();
+    g_drawMode = MODE_DRAW_DEFUALT;
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glUseProgram(0);
 }

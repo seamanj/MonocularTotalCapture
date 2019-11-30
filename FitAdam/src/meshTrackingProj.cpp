@@ -3,6 +3,8 @@
 #include <algorithm>
 #include "opencv2/gpu/gpu.hpp"
 // #define VISUALIZE_TRACKING
+#include <GL/glu.h>
+
 
 const float depthThresh = 1e-2;  // threshold for determining visibility
 const float backward_check_thresh = 2.0;        //2.0 pixel
@@ -326,7 +328,7 @@ const uint sample_dist)
         else
             vis_data.m_meshVerticesColor[iv] = cv::Point3d(-10000., -10000., 0.);
     }
-
+    std::cout << " tj0002- : " << gluErrorString(glGetError()) << std::endl;
     render->CameraMode(0);
     double calibK[9];
     std::copy(K, K + 9, calibK);

@@ -8,7 +8,7 @@ set -e
 #dataDir=/vol/research/extol/personal/cihan/data/MonocularTotalCapture/
 #dataDir=/home/seamanj/Workspace/MonocularTotalCapture/data
 dataDir=./data
-seqName=example_speech
+seqName=example_pheonix
 upperBody=-f
 
 #mkdir $dataDir"/"$seqName
@@ -17,11 +17,11 @@ upperBody=-f
 # Assume that you already have a video in $dataDir/(seqName)/(seqName).mp4 
 #dataDir=/vol/research/extol/personal/cihan/data/MonocularTotalCapture/
 # Git clone openpose to ../openpose and compile with cmake
-#openposeDir=../openpose ## tj : local
-openposeDir=/opt/openpose # tj : docker
+openposeDir=../openpose ## tj : local
+#openposeDir=/opt/openpose # tj : docker
 # Where the monocular total capture is installed
-MTCDir=/opt/MTC # tj : docker
-#MTCDir=/home/seamanj/Workspace/MonocularTotalCapture
+#MTCDir=/opt/MTC # tj : docker
+MTCDir=/home/seamanj/Workspace/MonocularTotalCapture
 
 # convert to absolute path
 MTCDir=$(readlink -f $MTCDir)
