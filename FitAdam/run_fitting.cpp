@@ -170,12 +170,12 @@ int main(int argc, char* argv[])
     std::vector<std::vector<cv::Point3i>> dense_constraint;
 
     // initialize total model
-    LoadTotalModelFromObj(g_total_model, std::string("/home/seamanj/Workspace/MonocularTotalCapture/FitAdam/model/mesh_nofeet.obj"));
-    LoadModelColorFromObj(g_total_model, std::string("/home/seamanj/Workspace/MonocularTotalCapture/FitAdam/model/nofeetmesh_byTomas_bottom.obj"));  // contain the color information
-    LoadTotalDataFromJson(g_total_model, std::string("/home/seamanj/Workspace/MonocularTotalCapture/FitAdam/model/adam_v1_plus2.json"),
-                          std::string("/home/seamanj/Workspace/MonocularTotalCapture/FitAdam/model/adam_blendshapes_348_delta_norm.json"),
-                          std::string("/home/seamanj/Workspace/MonocularTotalCapture/FitAdam/model/correspondences_nofeet.txt"));
-    LoadCocoplusRegressor(g_total_model, std::string("/home/seamanj/Workspace/MonocularTotalCapture/FitAdam/model/regressor_0n1_root.json"));
+    LoadTotalModelFromObj(g_total_model, std::string("model/mesh_nofeet.obj"));
+    LoadModelColorFromObj(g_total_model, std::string("model/nofeetmesh_byTomas_bottom.obj"));  // contain the color information
+    LoadTotalDataFromJson(g_total_model, std::string("model/adam_v1_plus2.json"),
+                          std::string("model/adam_blendshapes_348_delta_norm.json"),
+                          std::string("model/correspondences_nofeet.txt"));
+    LoadCocoplusRegressor(g_total_model, std::string("model/regressor_0n1_root.json"));
 
 //
 
