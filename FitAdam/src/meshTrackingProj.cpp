@@ -328,7 +328,7 @@ const uint sample_dist)
         else
             vis_data.m_meshVerticesColor[iv] = cv::Point3d(-10000., -10000., 0.);
     }
-    std::cout << " tj0002- : " << gluErrorString(glGetError()) << std::endl;
+//    std::cout << " tj0002- : " << gluErrorString(glGetError()) << std::endl;
     render->CameraMode(0);
     double calibK[9];
     std::copy(K, K + 9, calibK);

@@ -241,7 +241,7 @@ void Renderer::InitGraphics()
 //    glDisable(GL_TEXTURE_2D);
 
 
-    std::cout << "tj0001 : " << gluErrorString(glGetError()) << std::endl;
+//    std::cout << "tj0001 : " << gluErrorString(glGetError()) << std::endl;
 }
 
 
@@ -1341,9 +1341,9 @@ void Renderer::RenderAndReadDepthMap()
     const double nearFar_numerator = - options.zmax * options.zmin / nearFar_interval;
     for (int i = 0; i < 1920 * 1080; i++) pData->read_depth_buffer[i] = nearFar_numerator / (pData->read_depth_buffer[i] - options.zmax / nearFar_interval);
 
-    for(int i = 0; i < 1000; ++i)
-        std::cout << pData->read_depth_buffer[i] << " ";
-    std::cout << std::endl;
+//    for(int i = 0; i < 1000; ++i)
+//        std::cout << pData->read_depth_buffer[i] << " ";
+//    std::cout << std::endl;
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 //    glutPostRedisplay();
@@ -1360,7 +1360,7 @@ void Renderer::RenderProjection(VisualizedData& g_visData)
 
 void Renderer::ProjectionRenderer()
 {
-    std::cout << " tj0002 : " << gluErrorString(glGetError()) << std::endl;
+//    std::cout << " tj0002 : " << gluErrorString(glGetError()) << std::endl;
     assert(options.CameraMode == 1u);
     g_drawMode = MODE_DRAW_PROJECTION;
     glUseProgram(g_shaderProgramID[g_drawMode]);
@@ -1372,7 +1372,7 @@ void Renderer::ProjectionRenderer()
     pMat = m_camera.getProjectionMatrix();
     mvpMat = pMat * mvMat;
     glUniformMatrix4fv(MVP_id, 1, GL_FALSE, &mvpMat[0][0]);
-std::cout << " tj0002 : " << gluErrorString(glGetError()) << std::endl;
+//std::cout << " tj0002 : " << gluErrorString(glGetError()) << std::endl;
 //    glDisable(GL_LIGHTING);
 //    glEnable(GL_TEXTURE_2D);
     glBindFramebuffer(GL_FRAMEBUFFER, g_fbo_rgbfloat);
@@ -1383,20 +1383,20 @@ std::cout << " tj0002 : " << gluErrorString(glGetError()) << std::endl;
         std::cout << "FrameBuffer Fails." << std::endl;
         exit(0);
     }
-    std::cout << " tj0003 : " << gluErrorString(glGetError()) << std::endl;
+//    std::cout << " tj0003 : " << gluErrorString(glGetError()) << std::endl;
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
-    std::cout << " tj0004 : " << gluErrorString(glGetError()) << std::endl;
+//    std::cout << " tj0004 : " << gluErrorString(glGetError()) << std::endl;
     GLfloat white[3] = {-1., -1., -1.};  // test value
-    std::cout << " tj0004 : " << gluErrorString(glGetError()) << std::endl;
+//    std::cout << " tj0004 : " << gluErrorString(glGetError()) << std::endl;
     glClearBufferfv(GL_COLOR, 0, white);
-    std::cout << " tj0004 : " << gluErrorString(glGetError()) << std::endl;
+//    std::cout << " tj0004 : " << gluErrorString(glGetError()) << std::endl;
     glDrawBuffer(GL_COLOR_ATTACHMENT0);
-    std::cout << " tj0004 : " << gluErrorString(glGetError()) << std::endl;
+//    std::cout << " tj0004 : " << gluErrorString(glGetError()) << std::endl;
 
     glBindVertexArray(g_vao);
-    std::cout << " tj0004 : " << gluErrorString(glGetError()) << std::endl;
+//    std::cout << " tj0004 : " << gluErrorString(glGetError()) << std::endl;
     glBindBuffer(GL_ARRAY_BUFFER, g_vertexBuffer);
-std::cout << " tj0004 : " << gluErrorString(glGetError()) << std::endl;
+//std::cout << " tj0004 : " << gluErrorString(glGetError()) << std::endl;
     glBufferData(GL_ARRAY_BUFFER, sizeof(cv::Point3d) * (pData->m_meshVertices.size()) + sizeof(cv::Point3d) * (pData->m_meshVerticesColor.size()),
         NULL, GL_STATIC_DRAW);  
     int offset = sizeof(cv::Point3d) * (pData->m_meshVertices.size());
@@ -1408,7 +1408,7 @@ std::cout << " tj0004 : " << gluErrorString(glGetError()) << std::endl;
         memcpy((char*)ptr + sizeof(cv::Point3d) * i + offset, &(pData->m_meshVerticesColor[i]), sizeof(cv::Point3d));   // the 2D projection is suppose to be store in m_meshVerticesUV
     }
     glUnmapBuffer(GL_ARRAY_BUFFER);     // Tell OpenGL that we're done with the pointer
-std::cout << " tj0005 : " << gluErrorString(glGetError()) << std::endl;
+//std::cout << " tj0005 : " << gluErrorString(glGetError()) << std::endl;
     GLuint vertexPosition_id = glGetAttribLocation(g_shaderProgramID[MODE_DRAW_PROJECTION], "vertex_pos");
 
     glVertexAttribPointer(vertexPosition_id,            // Attribute 0 or vertexPosition_id
@@ -1430,16 +1430,16 @@ std::cout << " tj0005 : " << gluErrorString(glGetError()) << std::endl;
         0,            // stride
         (void*)offset);        // Offset in the buffer 
     glEnableVertexAttribArray(vertexColor_id);
-    std::cout << " tj0006 : " << gluErrorString(glGetError()) << std::endl;
+//    std::cout << " tj0006 : " << gluErrorString(glGetError()) << std::endl;
     //Face indexing
     if (pData->m_meshIndices.size()>0)
     {
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, g_indexBuffer);       //Note "GL_ELEMENT_ARRAY_BUFFER" instead of GL_ARRAY_BUFFER
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, pData->m_meshIndices.size() * sizeof(unsigned int), &(pData->m_meshIndices[0]), GL_STATIC_DRAW);  //allocate and copy together
     }
-    std::cout << " tj0006 : " << gluErrorString(glGetError()) << std::endl;
+//    std::cout << " tj0006 : " << gluErrorString(glGetError()) << std::endl;
 //    glPolygonMode(GL_FRONT, GL_FILL);
-    std::cout << " tj0006 : " << gluErrorString(glGetError()) << std::endl;
+//    std::cout << " tj0006 : " << gluErrorString(glGetError()) << std::endl;
     if (pData->m_meshIndices.size() > 0)
     {
         glDrawElements(         //Indexed
@@ -1450,10 +1450,10 @@ std::cout << " tj0005 : " << gluErrorString(glGetError()) << std::endl;
         );
     }
     else glDrawArrays(GL_POINTS, 0, pData->m_meshVertices.size());   //Non indexing version
-    std::cout << " tj0006 : " << gluErrorString(glGetError()) << std::endl;
+//    std::cout << " tj0006 : " << gluErrorString(glGetError()) << std::endl;
 //    glEnable(GL_LIGHTING);
     glFlush();
-    std::cout << " tj0001 : " << gluErrorString(glGetError()) << std::endl;
+//    std::cout << " tj0001 : " << gluErrorString(glGetError()) << std::endl;
 //    glutSwapBuffers();
 }
 
@@ -1470,9 +1470,9 @@ void Renderer::RenderAndReadProjection()
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glReadPixels(0, 0, 1920, 1080, GL_RGB, GL_FLOAT, pData->read_rgbfloat_buffer);
 
-    for(int i = 0; i < 1000; ++i)
-        std::cout << pData->read_rgbfloat_buffer[i] << " ";
-    std::cout << std::endl;
+//    for(int i = 0; i < 1000; ++i)
+//        std::cout << pData->read_rgbfloat_buffer[i] << " ";
+//    std::cout << std::endl;
 
 //    glutPostRedisplay();
     g_drawMode = MODE_DRAW_DEFUALT;

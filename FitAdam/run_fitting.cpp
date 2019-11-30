@@ -368,7 +368,7 @@ int main(int argc, char* argv[])
             readFrameParam(param_filename, frame_params);
             batch_refit_params[i] = frame_params;
         }
-        std::cout << " tj0002 ---: " << gluErrorString(glGetError()) << std::endl;
+//        std::cout << " tj0002 ---: " << gluErrorString(glGetError()) << std::endl;
         CMeshModelInstance mesh0;
         GenerateMesh(mesh0, gResultJoint, batch_refit_params[0], g_total_model, 2, FLAGS_euler);
         VisualizedData vis_data0;
@@ -377,10 +377,10 @@ int main(int argc, char* argv[])
         vis_data0.read_buffer = ret_bytes;
         render->options.K = calibK;
         render->CameraMode(0);  // ensure the shape of window is correct
-        std::cout << " tj1: " << gluErrorString(glGetError()) << std::endl;
+//        std::cout << " tj1: " << gluErrorString(glGetError()) << std::endl;
         render->RenderDepthMap(vis_data0);  // Render depth map from OpenGL
         render->RenderAndReadDepthMap();
-        std::cout << " tj2: " << gluErrorString(glGetError()) << std::endl;
+//        std::cout << " tj2: " << gluErrorString(glGetError()) << std::endl;
         cv::Mat depthframe0 = cv::Mat(1080, 1920, CV_32F, ret_depth).clone();  // deep copy
         cv::flip(depthframe0, depthframe0, 0);
 
@@ -390,7 +390,7 @@ int main(int argc, char* argv[])
         cv::Mat img0(ROWS, COLS, CV_8UC1, cv::Scalar(0));
         cv::Mat img0r = cv::imread(imgName0, CV_LOAD_IMAGE_GRAYSCALE);
         img0r.copyTo(img0.rowRange(0, img0r.rows).colRange(0, img0r.cols));
-        std::cout << " tj0005 --: " << gluErrorString(glGetError()) << std::endl;
+//        std::cout << " tj0005 --: " << gluErrorString(glGetError()) << std::endl;
         // run optical flow && refitting
         for (auto i = 0u, image_index = FLAGS_start + i; i < net_output.size() - 1; i++, image_index++)  // i -> i + 1
         {
@@ -416,7 +416,7 @@ int main(int argc, char* argv[])
                 img3r.copyTo(img3.rowRange(0, img3r.rows).colRange(0, img3r.cols));
                 GenerateMesh(mesh3, gResultJoint, batch_refit_params[i + 2], g_total_model, 2, FLAGS_euler);
             }
-            std::cout << " tj0004 --: " << gluErrorString(glGetError()) << std::endl;
+//            std::cout << " tj0004 --: " << gluErrorString(glGetError()) << std::endl;
             // get the skeleton of the previous frame
             std::vector<double> reconstruction;
             reconstruct_adam(g_total_model, batch_refit_params[i], reconstruction, FLAGS_euler);
@@ -432,7 +432,7 @@ int main(int argc, char* argv[])
             );
 
             batch_refit_params[i + 1].m_adam_coeffs = batch_refit_params[i].m_adam_coeffs;
-            std::cout << " tj0003 --: " << gluErrorString(glGetError()) << std::endl;
+//            std::cout << " tj0003 --: " << gluErrorString(glGetError()) << std::endl;
             cv::Mat resultMeshImage;
             // for (int t = 0; t < 1; t++)  // iterations for texture mapping
             for (int t = 0; t < 3; t++)  // iterations for texture mapping
@@ -460,20 +460,20 @@ int main(int argc, char* argv[])
                 render->RenderAndReadDepthMap();
                 cv::Mat depthframe1 = cv::Mat(1080, 1920, CV_32FC1, ret_depth).clone();  // deep copy
                 cv::flip(depthframe1, depthframe1, 0);
-                std::cout << " tj0002 --: " << gluErrorString(glGetError()) << std::endl;
+//                std::cout << " tj0002 --: " << gluErrorString(glGetError()) << std::endl;
                 // run optical flow (forward)
                 cv::Mat virtualImage;
                 // getVirtualImageConstraint(render, calibK, mesh0, mesh2, depthframe0, depthframe2, img0, img2, virtualImage, surface_constraint, 0);
                 getVirtualImageConstraint(render, calibK, mesh1, mesh2, depthframe1, depthframe2, img1, img2, virtualImage, surface_constraint, 0);
                 std::cout << "Constraints from texture Optical flow: " << surface_constraint.size() << std::endl;
-                std::cout << " tj0003 --: " << gluErrorString(glGetError()) << std::endl;
+//                std::cout << " tj0003 --: " << gluErrorString(glGetError()) << std::endl;
                 // if (FLAGS_imageOF && t == 0)
                 if (FLAGS_imageOF)
                 {
                     // correspondance from image optical flow
                     std::vector<cv::Point3i> image_surface_constraint;
                     Tracking_MeshVertex_depthMap(true, img1, img2, depthframe1, calibK, mesh1.m_vertices, image_surface_constraint, 0);
-                    std::cout << " tj0004 --: " << gluErrorString(glGetError()) << std::endl;
+//                    std::cout << " tj0004 --: " << gluErrorString(glGetError()) << std::endl;
                     if (i < net_output.size() - 2)  // also get t + 2 -> t + 1
                     {
                         VisualizedData vis_data3;
