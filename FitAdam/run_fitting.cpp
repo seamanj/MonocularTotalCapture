@@ -354,7 +354,8 @@ int main(int argc, char* argv[])
     */
     if (FLAGS_stage == 2)
     {
-        boost::filesystem::create_directories(FLAGS_root_dirs + "/" + FLAGS_seqName + "/body_3d_frontal_tracking/");
+//        boost::filesystem::create_directories(FLAGS_root_dirs + "/" + FLAGS_seqName + "/body_3d_frontal_tracking/");
+        boost::filesystem::create_directories(FLAGS_output_dirs + "/body_3d_frontal_tracking/");
 
         ModelFitter model_fitter(g_total_model);
         model_fitter.fit3D = true;
@@ -371,7 +372,8 @@ int main(int argc, char* argv[])
             std::cout << "Reading single frame results: " << image_index << std::endl;
             char basename[200];
             sprintf(basename, "%08d.txt", image_index);
-            const std::string param_filename = FLAGS_root_dirs + "/" + FLAGS_seqName + "/body_3d_frontal/" + basename;
+//            const std::string param_filename = FLAGS_root_dirs + "/" + FLAGS_seqName + "/body_3d_frontal/" + basename;
+            const std::string param_filename = FLAGS_output_dirs + "/body_3d_frontal/" + basename;
             smpl::SMPLParams frame_params;
             readFrameParam(param_filename, frame_params);
             batch_refit_params[i] = frame_params;
@@ -394,7 +396,8 @@ int main(int argc, char* argv[])
 
         char basename[200];
         sprintf(basename, "%s_%08d.png", FLAGS_seqName.c_str(), FLAGS_start);
-        const std::string imgName0 = FLAGS_root_dirs + "/" + FLAGS_seqName + "/raw_image/" + basename;
+//        const std::string imgName0 = FLAGS_root_dirs + "/" + FLAGS_seqName + "/raw_image/" + basename;
+        const std::string imgName0 =  FLAGS_output_dirs + "/raw_image/" + basename;
         cv::Mat img0(ROWS, COLS, CV_8UC1, cv::Scalar(0));
         cv::Mat img0r = cv::imread(imgName0, CV_LOAD_IMAGE_GRAYSCALE);
         img0r.copyTo(img0.rowRange(0, img0r.rows).colRange(0, img0r.cols));
@@ -404,12 +407,14 @@ int main(int argc, char* argv[])
         {
             std::cout << "Run tracking image " << image_index << " -> " << image_index + 1 << std::endl;
             sprintf(basename, "%s_%08d.png", FLAGS_seqName.c_str(), image_index);
-            const std::string imgName1 = FLAGS_root_dirs + "/" + FLAGS_seqName + "/raw_image/" + basename;
+//            const std::string imgName1 = FLAGS_root_dirs + "/" + FLAGS_seqName + "/raw_image/" + basename;
+            const std::string imgName1 = FLAGS_output_dirs + "/raw_image/" + basename;
             cv::Mat img1(ROWS, COLS, CV_8UC1, cv::Scalar(0));
             cv::Mat img1r = cv::imread(imgName1, CV_LOAD_IMAGE_GRAYSCALE);
             img1r.copyTo(img1.rowRange(0, img1r.rows).colRange(0, img1r.cols));
             sprintf(basename, "%s_%08d.png", FLAGS_seqName.c_str(), image_index + 1);
-            const std::string imgName2 = FLAGS_root_dirs + "/" + FLAGS_seqName + "/raw_image/" + basename;
+//            const std::string imgName2 = FLAGS_root_dirs + "/" + FLAGS_seqName + "/raw_image/" + basename;
+            const std::string imgName2 = FLAGS_output_dirs + "/raw_image/" + basename;
             cv::Mat img2(ROWS, COLS, CV_8UC1, cv::Scalar(0));
             cv::Mat img2r = cv::imread(imgName2, CV_LOAD_IMAGE_GRAYSCALE);
             img2r.copyTo(img2.rowRange(0, img2r.rows).colRange(0, img2r.cols));
@@ -419,7 +424,8 @@ int main(int argc, char* argv[])
             if (i < net_output.size() - 2)
             {
                 sprintf(basename, "%s_%08d.png", FLAGS_seqName.c_str(), image_index + 2);
-                const std::string imgName3 = FLAGS_root_dirs + "/" + FLAGS_seqName + "/raw_image/" + basename;
+//                const std::string imgName3 = FLAGS_root_dirs + "/" + FLAGS_seqName + "/raw_image/" + basename;
+                const std::string imgName3 = FLAGS_output_dirs + "/raw_image/" + basename;
                 cv::Mat img3r = cv::imread(imgName3, CV_LOAD_IMAGE_GRAYSCALE);
                 img3r.copyTo(img3.rowRange(0, img3r.rows).colRange(0, img3r.cols));
                 GenerateMesh(mesh3, gResultJoint, batch_refit_params[i + 2], g_total_model, 2, FLAGS_euler);
@@ -638,7 +644,8 @@ int main(int argc, char* argv[])
             cv::Mat aligned = alignMeshImageAlpha(resultMeshImage, img2c);
 
             sprintf(basename, "%08d.png", image_index + 1);
-            const std::string filename = FLAGS_root_dirs + "/" + FLAGS_seqName + "/body_3d_frontal_tracking/" + basename;
+//            const std::string filename = FLAGS_root_dirs + "/" + FLAGS_seqName + "/body_3d_frontal_tracking/" + basename;
+            const std::string filename = FLAGS_output_dirs + "/body_3d_frontal_tracking/" + basename;
             assert(cv::imwrite(filename, aligned));
 
             sprintf(basename, "%08d.txt", image_index + 1);
@@ -669,11 +676,13 @@ int main(int argc, char* argv[])
                 cv::Mat aligned = alignMeshImageAlpha(resultMeshImage, img1c);
 
                 sprintf(basename, "%08d.png", image_index);
-                const std::string filename = FLAGS_root_dirs + "/" + FLAGS_seqName + "/body_3d_frontal_tracking/" + basename;
+//                const std::string filename = FLAGS_root_dirs + "/" + FLAGS_seqName + "/body_3d_frontal_tracking/" + basename;
+                const std::string filename = FLAGS_output_dirs + "/body_3d_frontal_tracking/" + basename;
                 assert(cv::imwrite(filename, aligned));
 
                 sprintf(basename, "%08d.txt", image_index);
-                const std::string param_filename = FLAGS_root_dirs + "/" + FLAGS_seqName + "/body_3d_frontal_tracking/" + basename;
+//                const std::string param_filename = FLAGS_root_dirs + "/" + FLAGS_seqName + "/body_3d_frontal_tracking/" + basename;
+                const std::string param_filename = FLAGS_output_dirs + "/body_3d_frontal_tracking/" + basename;
                 writeFrameParam(param_filename, batch_refit_params[i]);
             }
         }
